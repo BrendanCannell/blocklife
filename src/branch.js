@@ -1,21 +1,15 @@
 import * as H from "./hash"
+import * as D from "./direction"
+import * as E from "./edge"
 
-export let Malloc = () => ({
-  quadrants: [null, null, null, null],
-  north: 0,
-  south: 0,
-  west: 0,
-  east: 0,
-  northwest: 0,
-  northeast: 0,
-  southwest: 0,
-  southeast: 0,
-  hash: 0,
-  size: 0,
-  population: 0
-})
+export let Malloc = () => {
+  let branch = [null, null, null, null]
 
-const [NW, NE, SW, SE] = [0, 1, 2, 3]
+  branch.size = 0
+  branch.hash = 0
+  branch.edges = [null, null, null, null]
+  branch.corners = [0, 0, 0, 0]
+}
 
 const QUADRANTS = [
   {index: 0, offset: [0,   0]},
@@ -44,54 +38,42 @@ let QuadrantLocation = (location, size) => {
   return {index, location: [x - dx * size, y - dy * size]}
 }
 
-let UpdateDerived = branch => {
-  let [NW, NE, SW, SE] = branch.quadrants
-  
-  branch.north = H.of(NW.north, NE.north)
-  branch.south = H.of(SW.south, SE.south)
-  branch.west  = H.of(NW.west,  SW.west)
-  branch.east  = H.of(NE.east,  SE.east)
-  branch.northwest = NW.northwest
-  branch.northeast = NE.northeast
-  branch.southwest = SW.southwest
-  branch.southeast = SE.southeast
+export let Hash = H.ofHashedArray
 
-  branch.hash = H.of(NW.hash, NE.hash, SW.hash, SE.hash)
-  branch.population = branch.quadrants.reduce((a, b) => a + b.population, 0)
+export let SetDerived = (branch, hash = Hash(branch)) => {
+  branch.hash = hash
+
+  for (let i = 0; i < 4; i++) {
+    branch.edges[i] = Edge(i, branch)
+    branch.corners[i] = branch[i].corners[i]
+  }
 
   return branch
 }
 
 export let AddTo = ({Recur}) =>
-  ({quadrants, size}, opts, x, y) => {
+  (branch, opts, x, y) => {
+    let {size} = branch
+
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      Recur(quadrants[index], opts, x + dx * size, y + dy * size)
+      Recur(branch[index], opts, x + dx * size, y + dy * size)
   }
 
-export let Copy = ({Recur, Malloc: M = Malloc}) =>
-  (branch) => {
-    let raw = M()
+export let Copy = ({Recur}) =>
+  (raw, branch) => {
     raw.size = branch.size
 
     for (let i = 0; i < 4; i++)
-      raw.quadrants[i] = Recur(branch.quadrants[i])
+      raw[i] = Recur(branch[i])
     
-    return UpdateDerived(raw)
+    return raw
   }
 
 export let Equal = ({Recur}) =>
-  ({quadrants: a}, {quadrants: b}) => {
-    if (a === b) return true
+  (a, b) => D.QUADRANTS.every(i => Recur(a[i], b[i]))
 
-    for (let i = 0; i < 4; i++)
-      if (!Recur(a[i], b[i])) return false
-    
-    return true
-  }
-
-export let FromLiving = ({Recur, Malloc: M = Malloc}) =>
-  (locations, size) => {
-    let raw = M()
+export let FromLiving = ({Recur}) =>
+  (raw, locations, size) => {
     raw.size = size
 
     // From live locations
@@ -104,64 +86,72 @@ export let FromLiving = ({Recur, Malloc: M = Malloc}) =>
     }
 
     for (let i = 0; i < 4; i++)
-      raw.quadrants[i] = Recur(partitions[i], size / 2)
+      raw[i] = Recur(partitions[i], size / 2)
 
-    return UpdateDerived(raw)
+    return raw
   }
 
 export let Get = ({Recur}) =>
-  ({quadrants, size}, loc) => {
-    let {index, location} = QuadrantLocation(loc, size)
+  (branch, loc) => {
+    let {index, location} = QuadrantLocation(loc, branch.size)
 
-    return Recur(quadrants[index], location)
+    return Recur(branch[index], location)
   }
 
 export let Living = ({Recur}) =>
-  function*({quadrants, size}) {
+  function*(branch) {
+    let {size} = branch
+
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      for (let [x, y] of Recur(quadrants[index]))
+      for (let [x, y] of Recur(branch[index]))
         yield [x + dx * size, y + dy * size]
   }
 
-export let Next = ({Recur, Malloc: M = Malloc}) =>
-  (branch, north, south, west, east, northwest, northeast, southwest, southeast) => {
-    let raw = M()
-    raw.size = branch.size
+export let Next = ({Recur}) => (
+    raw = Malloc(),
+    {
+      node: branch,
+      edges: [N, S, W, E],
+      corners: [NW, NE, SW, SE]
+    }
+  ) => {
+    let B = branch
 
-    const q = 'quadrants'
+    raw.size = B.size
 
     let
-      sg0 = northwest[q][SE],
-      sg1 = north    [q][SW],
-      sg2 = north    [q][SE],
-      sg3 = northeast[q][SW],
+      sg0 = NW[D.SE],
+      sg1 = N [D.SW],
+      sg2 = N [D.SE],
+      sg3 = NE[D.SW],
   
-      sg4 = west     [q][NE],
-      sg5 = branch   [q][NW],
-      sg6 = branch   [q][NE],
-      sg7 = east     [q][NW],
+      sg4 = W [D.NE],
+      sg5 = B [D.NW],
+      sg6 = B [D.NE],
+      sg7 = E [D.NW],
   
-      sg8 = west     [q][SE],
-      sg9 = branch   [q][SW],
-      sgA = branch   [q][SE],
-      sgB = east     [q][SW],
+      sg8 = W [D.SE],
+      sg9 = B [D.SW],
+      sgA = B [D.SE],
+      sgB = E [D.SW],
   
-      sgC = southwest[q][NE],
-      sgD = south    [q][NW],
-      sgE = south    [q][NE],
-      sgF = southeast[q][NW]
+      sgC = SW[D.NE],
+      sgD = S [D.NW],
+      sgE = S [D.NE],
+      sgF = SE[D.NW]
     
-    raw[q][NW] = Recur(sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
-    raw[q][NE] = Recur(sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
-    raw[q][SW] = Recur(sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
-    raw[q][SE] = Recur(sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
-    
-    return UpdateDerived(raw)
+    raw[D.NW] = Recur(sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
+    raw[D.NE] = Recur(sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
+    raw[D.SW] = Recur(sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
+    raw[D.SE] = Recur(sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
+
+    return raw
   }
 
-export let Set = ({Recur, Malloc: M = Malloc}) =>
-  ({quadrants, size}, pairs) => {
-    let raw = M()
+export let Set = ({Recur}) =>
+  (raw, branch, pairs) => {
+    let {size} = branch
+
     raw.size = size
 
     let partitions = [[], [], [], []]
@@ -173,10 +163,10 @@ export let Set = ({Recur, Malloc: M = Malloc}) =>
     }
 
     for (let i = 0; i < 4; i++)
-      raw.quadrants[i] =
+      raw[i] =
         partitions[i].length === 0
-          ? quadrants[i]
-          : Recur(quadrants[i], partitions[i])
+          ? branch[i]
+          : Recur(branch[i], partitions[i])
 
-    return UpdateDerived(raw)
+    return raw
   }

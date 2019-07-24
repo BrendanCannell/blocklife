@@ -1,23 +1,54 @@
 import * as H from "./hash"
+import * as E from "./edge"
+import * as Q from "./quadrant"
 
 export const SIZE = 32
 
-export let Malloc = () => ({
-  size: SIZE,
-  rows: new Int32Array(SIZE + 1),
-  north: 0,
-  south: 0,
-  west: 0,
-  east: 0,
-  northwest: 0,
-  northeast: 0,
-  southwest: 0,
-  southeast: 0,
-  hash: 0,
-  population: 0
-})
+export let Malloc = () => {
+  let leaf = new Int32Array(SIZE + 1)
+
+  leaf.size = SIZE
+  leaf.hash = 0
+  leaf.edges = [0, 0, 0, 0]
+  leaf.corners = [0, 0, 0, 0]
+
+  return leaf
+}
+
+export let Hash = H.ofArray
+
+export let SetDerived = (leaf, hash = Hash(leaf)) => {
+  leaf.hash = hash
+
+  var west = 0
+  var east = 0
+  var population = 0
+
+  for (let i = 0; i < SIZE; i++) {
+    let row = leaf[i]
+    
+    west |= (row & WEST_EDGE) >>> i
+    east |= (row & EAST_EDGE) <<  31 - i
+
+    population += Population(row)
+  }
+
+  leaf.edges[E.N] = leaf[0]
+  leaf.edges[E.S] = leaf[31]
+  leaf.edges[E.W] = west
+  leaf.edges[E.E] = east
   
-export let AddTo = () => ({rows}, {data, Offset, divisions, mask}, x, y) => {
+  leaf.corners[Q.NW] = west >>> 31
+  leaf.corners[Q.NE] = east >>> 31
+  leaf.corners[Q.SW] = west & 1
+  leaf.corners[Q.SE] = east & 1
+
+  leaf.population = population
+
+  return leaf
+}
+  
+export let AddTo = (leaf, {data, Offset, divisions, mask}, x, y) => {
   divisions = divisions | 0; mask = mask | 0;
 
   let base = Offset(x, y) | 0
@@ -26,82 +57,69 @@ export let AddTo = () => ({rows}, {data, Offset, divisions, mask}, x, y) => {
     let offset = base + y * divisions
 
     for (let d = 0; d < divisions; d++) {
-      data[offset + d] += rows[y] >>> d & mask
+      data[offset + d] += leaf[y] >>> d & mask
     }
   }
 
   return data
 }
 
-export let Get = () => ({rows}, [x, y]) => {
+export let Get = (leaf, [x, y]) => {
   CheckBounds(x, y)
 
-  return _Get(rows, x, y)
+  return _Get(leaf, x, y)
 }
 
-export let Living = () => function*({rows}) {
+export let Living = function*(leaf) {
   for (let y = 0; y < SIZE; y++)
     for (let x = 0; x < SIZE; x++)
-      if (_Get(rows, x, y) === true)
+      if (_Get(leaf, x, y) === true)
         yield [x, y]
 }
 
-export let Equal = () => ({rows: r1, hash: h1}, {rows: r2, hash: h2}) => {
-  if (r1 === r2) return true
-  if (h1 !== h2) return false
-  
+export let Equal = (a, b) => {
   for (let i = 0; i < SIZE; i++)
-    if (r1[i] !== r2[i]) return false
+    if (a[i] !== b[i]) return false
   
   return true
 }
 
-export let Copy = ({Malloc: M = Malloc()}) => ({rows}) => {
-  let raw = M()
-
+export let Copy = (raw = Malloc(), leaf) => {
   for (let i = 0; i < SIZE; i++)
-    raw.rows[i] = rows[i]
+    raw[i] = leaf[i]
   
-  return UpdateDerived(raw)
+  return raw
 }
 
-export let FromLiving = ({Malloc: M = Malloc()}) => (locations) => {
-  let raw = M()
-
+export let FromLiving = (raw = Malloc(), locations) => {
   for (let loc of locations)
-    Mutate(raw.rows, loc, true)
+    Mutate(raw, loc, true)
 
-  return UpdateDerived(raw)
+  return raw
 }
 
-export let Set = ({Malloc: M = Malloc()}) => ({rows}, pairs) => {
-  let raw = M()
-
+export let Set = (raw = Malloc(), leaf, pairs) => {
   for (let i = 0; i < SIZE; i++)
-    raw.rows[i] = rows[i]
+    raw[i] = leaf[i]
   
   for (let [loc, state] of pairs)
-    Mutate(raw.rows, loc, state)
+    Mutate(raw, loc, state)
 
-  return UpdateDerived(raw)
+  return raw
 }
 
 let rowDataN = new Int32Array(5)
 let rowData  = new Int32Array(5)
 let rowDataS = new Int32Array(5)
 
-export let Next = ({Malloc: M = Malloc()}) => (
-    {rows},
-    {south: north},
-    {north: south},
-    {east: west},
-    {west: east},
-    {southeast: northwest},
-    {southwest: northeast},
-    {northeast: southwest},
-    {northwest: southeast}) => {
-
-  let raw = M()
+export let Next = (
+    raw = Malloc(),
+    {
+      node: leaf,
+      edges: [north, south, west, east],
+      corners: [northwest, northeast, southwest, southeast]
+    }
+  ) => {
 
   // Set up row data for the row just north of the block (`north.south`)...
 
@@ -112,11 +130,11 @@ export let Next = ({Malloc: M = Malloc()}) => (
     northeast
   )
 
-  // ...and for the northernmost row of the block (`rows[0]`), where we start.
+  // ...and for the northernmost row of the block (`leaf[0]`), where we start.
 
   PutRowData(
     rowData,
-    rows[0],
+    leaf[0],
     west & WEST_EDGE,
     east >>> SIZE - 1
   )
@@ -128,13 +146,13 @@ export let Next = ({Malloc: M = Malloc()}) => (
 
   // Put the row south of the block in the extra spot at the end of the array
 
-  rows[SIZE] = south
+  leaf[SIZE] = south
 
   for (let y = 0; y < SIZE; y++) {
-    // To compute the the current row, we need the data for the row south of it (`rows[y + 1]`)
+    // To compute the the current row, we need the data for the row south of it (`leaf[y + 1]`)
     PutRowData(
       rowDataS,
-      rows[y + 1],
+      leaf[y + 1],
       westEdgeS & WEST_EDGE,
       eastEdgeS >>> 31
     )
@@ -159,7 +177,7 @@ export let Next = ({Malloc: M = Malloc()}) => (
     let nextRow = twoOrThreeNeighbors & (isAlive | b0)
 
     // Store the result
-    raw.rows[y] = nextRow
+    raw[y] = nextRow
 
     // Cache the row data for the next iteration
     let tmp = rowDataN
@@ -171,9 +189,9 @@ export let Next = ({Malloc: M = Malloc()}) => (
     eastEdgeS <<= 1
   }
 
-  rows[SIZE] = 0
+  leaf[SIZE] = 0
 
-  return UpdateDerived(raw)
+  return raw
 }
 
 const WEST_EDGE = 0x80000000
@@ -189,7 +207,7 @@ let CheckBounds = (x, y) => {
 }
 
 // Number of set bits in a U32. See "Hacker's Delight" chapter 5
-let population = x => {
+let Population = x => {
   x = (x & 0x55555555) + (x >>> 1  & 0x55555555)
   x = (x & 0x33333333) + (x >>> 2  & 0x33333333)
   x = (x & 0x0F0F0F0F) + (x >>> 4  & 0x0F0F0F0F)
@@ -199,53 +217,22 @@ let population = x => {
   return x | 0
 }
 
-let _Get = (rows, x, y) => {
-  let row = rows[y]
+let _Get = (leaf, x, y) => {
+  let row = leaf[y]
   let mask = WEST_EDGE >>> x
 
   return (row & mask) !== 0
 }
 
-let Mutate = (rows, [x, y], state) => {
+let Mutate = (leaf, [x, y], state) => {
   CheckBounds(x, y)
 
-  let row = rows[y]
+  let row = leaf[y]
   let mask = WEST_EDGE >>> x
 
-  rows[y] = state ?
+  leaf[y] = state ?
       row | mask
     : row & ~mask
-
-  return rows
-}
-
-let UpdateDerived = leaf => {
-  var west = 0
-  var east = 0
-  var hash = SIZE * 4
-  var pop = 0
-
-  for (let i = 0; i < SIZE; i++) {
-    let row = leaf.rows[i]
-    
-    west |= (row & WEST_EDGE) >>> i
-    east |= (row & EAST_EDGE) <<  31 - i
-
-    pop += population(row)
-    hash = H.reducer(hash, row)
-  }
-
-  leaf.north = leaf.rows[0]
-  leaf.south = leaf.rows[31]
-  leaf.west  = west
-  leaf.east  = east
-  leaf.northwest = west >>> 31
-  leaf.northeast = east >>> 31
-  leaf.southwest = west & 1
-  leaf.southeast = east & 1
-
-  leaf.hash = H.finalize(hash)
-  leaf.population = pop
 
   return leaf
 }

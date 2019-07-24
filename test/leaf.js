@@ -1,132 +1,112 @@
-// import * as S from "../src/store"
-// import * as Leaf from "../src/leaf"
-// import {assert} from 'chai'
-// import seedrandom from 'seedrandom'
-// import {next, order} from "./util/life"
-// import * as Loc from "./util/location"
+import * as S from "../src/store"
+import * as Leaf from "../src/leaf"
+import * as Neighborhood from "../src/neighborhood"
+import Canonicalize from "../src/canonicalize"
+import {assert} from 'chai'
+import seedrandom from 'seedrandom'
+import {next, order} from "./util/life"
+import * as Loc from "./util/location"
+import {pick, map, go} from "./util/data"
 
-// let leafStore = S.New(Leaf.Malloc)
-// // let branchStore = S.New(Branch.Malloc)
+let leafStore = S.New(Leaf.Malloc)
+let leafMemoTable = new Map()
 
-// let pipe = ([op, ...rest]) =>
-//   (...args) => rest.reduceRight((acc, fn) => fn(acc), op(...args))
+let neighborhoodStore = S.New(Neighborhood.Malloc)
+let neighborhoodMemoTable = new Map()
 
-// let go = (data, ...ops) => pipe(ops)(data)
+let C8izeLeaf = Canonicalize({
+  ...pick(['Hash', 'Equal', 'SetDerived'])(Leaf),
+  ...pick(['Malloc', 'Free'])(leafStore),
+  GetCanon: hash => leafMemoTable.get(hash),
+  SetCanon: (hash, node) => leafMemoTable.set(hash, node)
+})
 
-// let zip = objs => {
-//   let keys = Object.keys(Object.assign({}, objs))
-//   let entries = keys.map(k => [k, objs.map(obj => obj[k])])
+let C8izeNeighborhood = Canonicalize({
+  ...pick(['Hash', 'Equal', 'SetDerived'])(Neighborhood),
+  ...pick(['Malloc', 'Free'])(neighborhoodStore),
+  GetCanon: hash => neighborhoodMemoTable.get(hash),
+  SetCanon: (hash, node) => neighborhoodMemoTable.set(hash, node)
+})
 
-//   return Object.fromEntries(entries)
-// }
+let withC8izedLeaf = {
+  ...Leaf,
+  ...go(Leaf,
+      pick(['Copy', 'FromLiving', 'Next', 'Set']),
+      map(C8izeLeaf))
+}
 
-// let pick = keys => filter(([key]) => keys.includes(key))
+let C8izedNeighborhood = C8izeNeighborhood(Neighborhood.New)
+let plainNext = withC8izedLeaf.Next
 
-// let asPairs = fn => obj =>
-//   Object.fromEntries(fn(Object.entries(obj)))
+let withMemoizedNeighborhood = {
+  ...withC8izedLeaf,
+  Next: (...args) => {
+    let neighborhood = C8izedNeighborhood(...args)
 
-// let filter = fn => asPairs(obj =>
-//   obj.filter(fn))
+    if (!neighborhood.next) {
+      neighborhood.next = plainNext(neighborhood)
+    }
 
-// let map = fn => asPairs(obj =>
-//   obj.map(([key, value]) => [key, fn(value)]))
+    return neighborhood.next
+  }
+}
 
-// let withRaw = store => fn =>
-//   (...args) => fn(...args, store.Get())
+let L = withMemoizedNeighborhood
 
-// let patchAllocative = (Node, store) => ({
-//   ...Node,
-//   ...go(Node,
-//       pick(allocative),
-//       map(withRaw(store)))
-// })
+let rng = seedrandom(0)
 
-// let fns = {
-//   AddTo: null,
-//   Copy: null,
-//   Equal: null,
-//   FromLiving: null,
-//   Get: null,
-//   Living: null,
-//   Next: null,
-//   Set: null,
-// }
+let size = L.SIZE
 
-// let allocative = ['Copy', 'FromLiving', 'Next', 'Set']
-// let polymorphicFirstArg = ['AddTo', 'Copy', 'Equal', 'Get', 'Living', 'Malloc', 'Next', 'Set']
+let empty4 = [...Array(4)].map(() => L.FromLiving([]))
 
+let emptyNeighborhood = node => [node, ...empty4, ...empty4]
 
-// let L = patchAllocative(Leaf, leafStore)
-
-// // let B = patchAllocative(Branch.Link({child: fns}), branchStore)
-
-// let dispatchFirstArg = ([branchFn, leafFn]) =>
-//   (node, ...rest) =>
-//     node.size === Leaf.SIZE
-//       ? leafFn(node, ...rest)
-//       : branchFn(node, ...rest)
-
-// let dispatchFns =
-//   go(zip([L, {}]),
-//     pick(polymorphicFirstArg),
-//     map(dispatchFirstArg))
-
-// Object.assign(fns,
-//   dispatchFns,
-//   {
-//     FromLiving: (locations, size) =>
-//       size === Leaf.SIZE
-//         ? L.FromLiving(locations, size)
-//         : B.FromLiving(locations, size)
-//   })
-
-// let rng = seedrandom(0)
-
-// let size = L.SIZE
-// let empties = [...Array(8)].map(() => L.FromLiving([]))
-// let RandomLocations = () => Loc.RandomLocations(size, rng)
-// let InBounds = Loc.InBounds(size)
+let RandomLocations = () => Loc.RandomLocations(size, rng)
+let InBounds = Loc.InBounds(size)
   
-// let randomData = []
-// let withRandoms = (n, fn) => () => {
-//   while (n > randomData.length) {
-//     let rl = RandomLocations()
+let randomData = []
+let withRandoms = (n, fn) => () => {
+  while (n > randomData.length) {
+    let rl = RandomLocations()
 
-//     let startAlive = rl.alive.slice(5)
-//     let setAlive = rl.alive.slice(0, 5).map(loc => [loc, true])
-//     let setDead = rl.dead.slice(0, 5).map(loc => [loc, false])
+    let startAlive = rl.alive.slice(5)
+    let setAlive = rl.alive.slice(0, 5).map(loc => [loc, true])
+    let setDead = rl.dead.slice(0, 5).map(loc => [loc, false])
 
-//     let start = L.FromLiving(startAlive)
-//     let leaf = L.Set(start, [...setAlive, ...setDead])
+    let start = L.FromLiving(startAlive)
+    let leaf = L.Set(start, [...setAlive, ...setDead])
 
-//     randomData.push({leaf, ...rl})
-//   }
+    randomData.push({leaf, ...rl})
+  }
 
-//   for (n--; n >= 0; n--) fn(randomData[n])
-// }
+  for (n--; n >= 0; n--) fn(randomData[n])
+}
 
-// describe('Leaf', () => {
+describe('Leaf', () => {
 
-//   let n = 10
+  let n = 10
 
-//   it(".get/set(<out-of-bounds-cell>) throws exception", withRandoms(1, ({leaf, outOfBounds}) =>
-//     outOfBounds.forEach(cell => assert.throws(() => L.Get(leaf, cell)))
-//     || outOfBounds.forEach(cell => assert.throws(() => L.Set(leaf, cell)))))
+  it(".get/set(<out-of-bounds-cell>) throws exception", withRandoms(1, ({leaf, outOfBounds}) =>
+    outOfBounds.forEach(cell => assert.throws(() => L.Get(leaf, cell)))
+    || outOfBounds.forEach(cell => assert.throws(() => L.Set(leaf, cell)))))
 
-//   it(".alive() = set cells", withRandoms(n, ({alive, leaf}) => {
-//     assert.deepEqual([...L.Living(leaf)].sort(order), alive)
-//   }))
+  it(".alive() = set cells", withRandoms(n, ({alive, leaf}) => {
+    assert.deepEqual([...L.Living(leaf)].sort(order), alive)
+  }))
 
-//   it(".get(<set cell>) = true", withRandoms(n, ({leaf, alive}) =>
-//     alive.forEach(cell => assert.isTrue(L.Get(leaf, cell)))))
+  it(".get(<set cell>) = true", withRandoms(n, ({leaf, alive}) =>
+    alive.forEach(cell => assert.isTrue(L.Get(leaf, cell)))))
 
-//   it(".get(<non-set cell>) = false", withRandoms(n, ({leaf, dead}) =>
-//     dead.forEach(cell => assert.isFalse(L.Get(leaf, cell)))))
+  it(".get(<non-set cell>) = false", withRandoms(n, ({leaf, dead}) =>
+    dead.forEach(cell => assert.isFalse(L.Get(leaf, cell)))))
 
-//   it(".next(...empties) agrees with reference", withRandoms(n, ({leaf, alive}) => {
-//     let reference = next(alive).filter(InBounds)
-//     let nextLeaf = L.Next(leaf, ...empties)
+  it(".next(...empties) agrees with reference", withRandoms(n, ({leaf, alive}) => {
+    let reference = next(alive).filter(InBounds)
+    let nextLeaf = L.Next(...emptyNeighborhood(leaf))
+    for (let i = 0; i < 10 - 1; i++) nextLeaf = L.Next(...emptyNeighborhood(leaf))
+    console.log(leafMemoTable.size)
+    console.log(neighborhoodMemoTable.size)
 
-//     assert.deepEqual([...L.Living(nextLeaf)].sort(order), reference)
-//   }))
-// })
+    assert.deepEqual([...L.Living(nextLeaf)].sort(order), reference)
+  }))
+})

@@ -2,7 +2,7 @@ export let Copy = (from, copyObj = x => x) =>
   New(from.Malloc, from.pool.map(copyObj), from.next)
 
 export let New = (Malloc, pool = [], next = 0) => ({
-  Get: () => {
+  Malloc: () => {
     if (next === pool.length) pool.push(Malloc())
 
     return pool[next++]
@@ -25,11 +25,5 @@ export let New = (Malloc, pool = [], next = 0) => ({
   },
 
   Copy: (copyObj = x => x) =>
-    New(Malloc, pool.map(copyObj), next),
-
-  Malloc,
-  pool,
-  get next() {
-    return next
-  },
+    New(Malloc, pool.map(copyObj), next)
 })

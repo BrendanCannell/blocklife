@@ -1,11 +1,31 @@
 // Uses Paul Hsieh's SuperFastHash algorithm
 
-let ofArray = array => {
-  let hash = array.length * 4
+let of = (...args) => {
+  let len = args.length
+  let hash = len * 4
 
-  for (let i = 0; i < array.length; i++) {
+  for (let i = 0; i < len; i++)
+    hash = reducer(hash, args[i] | 0)
+
+  return finalize(hash)
+}
+
+let ofArray = array => {
+  let len = array.length
+  let hash = len * 4
+
+  for (let i = 0; i < len; i++)
     hash = reducer(hash, array[i] | 0)
-  }
+
+  return finalize(hash)
+}
+
+let ofHashedArray = array => {
+  let len = array.length
+  let hash = len * 4
+
+  for (let i = 0; i < len; i++)
+    hash = reducer(hash, array[i].hash | 0)
 
   return finalize(hash)
 }
@@ -36,4 +56,4 @@ let finalize = hashAcc => {
   return h
 }
 
-export {ofArray, reducer, finalize}
+export {of, ofArray, ofHashedArray, reducer, finalize}

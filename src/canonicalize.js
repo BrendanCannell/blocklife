@@ -1,7 +1,7 @@
 // Opts -> (A -> Node) -> (A -> Node)
 
-({Hash, Equal, SetDerived, Malloc, Free, GetCanon, SetCanon}) => Node => (...args) => {
-  let node = Node(Malloc(), ...args)
+export let Canonicalize = ({Hash, Equal, SetDerived, Malloc, Free, GetCanon, SetCanon}) => Constructor => (...args) => {
+  let node = Constructor(Malloc(), ...args)
   let hash = Hash(node)
   let canon = GetCanon(hash)
 
@@ -17,3 +17,5 @@
     return canon
   }
 }
+
+export default Canonicalize
