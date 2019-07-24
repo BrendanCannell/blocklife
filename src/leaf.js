@@ -1,6 +1,5 @@
 import * as H from "./hash"
-import * as E from "./edge"
-import * as Q from "./quadrant"
+import * as D from "./direction"
 
 export const SIZE = 32
 
@@ -33,15 +32,15 @@ export let SetDerived = (leaf, hash = Hash(leaf)) => {
     population += Population(row)
   }
 
-  leaf.edges[E.N] = leaf[0]
-  leaf.edges[E.S] = leaf[31]
-  leaf.edges[E.W] = west
-  leaf.edges[E.E] = east
+  leaf.edges[D.N] = leaf[0]
+  leaf.edges[D.S] = leaf[31]
+  leaf.edges[D.W] = west
+  leaf.edges[D.E] = east
   
-  leaf.corners[Q.NW] = west >>> 31
-  leaf.corners[Q.NE] = east >>> 31
-  leaf.corners[Q.SW] = west & 1
-  leaf.corners[Q.SE] = east & 1
+  leaf.corners[D.NW] = west >>> 31
+  leaf.corners[D.NE] = east >>> 31
+  leaf.corners[D.SW] = west & 1
+  leaf.corners[D.SE] = east & 1
 
   leaf.population = population
 

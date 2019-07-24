@@ -1,5 +1,6 @@
 import * as H from "./hash"
 import * as D from "./direction"
+import * as G from "./edge"
 import isLeaf from "./isLeaf"
 
 export let Malloc = () => ({

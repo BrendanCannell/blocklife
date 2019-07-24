@@ -3,8 +3,8 @@ import * as D from "./direction"
 
 export const N = 0
 export const S = 1
-export const W = 2
-export const E = 3
+export const W = 0
+export const E = 1
 
 export let Malloc = () => [null, null]
 
