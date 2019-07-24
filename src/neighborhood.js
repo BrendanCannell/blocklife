@@ -1,5 +1,6 @@
 import * as H from "./hash"
 import * as D from "./direction"
+import isLeaf from "./isLeaf"
 
 export let Malloc = () => ({
   node: null,
@@ -16,15 +17,17 @@ export let New = (
     ) => {
   raw.node = node
   
-  raw.edges[D.N] = N
-  raw.edges[D.S] = S
-  raw.edges[D.W] = W
-  raw.edges[D.E] = E
+  raw.edges[D.N] = N.edges[D.N]
+  raw.edges[D.S] = S.edges[D.S]
+  raw.edges[D.W] = W.edges[D.E]
+  raw.edges[D.E] = E.edges[D.W]
 
-  raw.corners[D.NW] = NW
-  raw.corners[D.NE] = NE
-  raw.corners[D.SW] = SW
-  raw.corners[D.SE] = SE
+  raw.corners[D.NW] = NW.corners[D.SE]
+  raw.corners[D.NE] = NE.corners[D.SW]
+  raw.corners[D.SW] = SW.corners[D.NE]
+  raw.corners[D.SE] = SE.corners[D.NW]
+
+  raw.next = null
 
   return raw
 }
@@ -33,7 +36,7 @@ export let SetDerived = x => x
 
 export let Hash = ({node, edges, corners}) => H.of(
   node.hash,
-  H.ofHashedArray(edges),
+  isLeaf(node) ? H.ofArray(edges) : H.ofHashedArray(edges),
   H.ofArray(corners)
 )
 

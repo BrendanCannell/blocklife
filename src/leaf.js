@@ -92,6 +92,9 @@ export let Copy = (raw = Malloc(), leaf) => {
 }
 
 export let FromLiving = (raw = Malloc(), locations) => {
+  for (let i = 0; i < SIZE; i++)
+    raw[i] = 0
+
   for (let loc of locations)
     Mutate(raw, loc, true)
 

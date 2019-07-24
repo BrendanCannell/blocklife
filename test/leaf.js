@@ -102,10 +102,18 @@ describe('Leaf', () => {
 
   it(".next(...empties) agrees with reference", withRandoms(n, ({leaf, alive}) => {
     let reference = next(alive).filter(InBounds)
-    let nextLeaf = L.Next(...emptyNeighborhood(leaf))
-    for (let i = 0; i < 10 - 1; i++) nextLeaf = L.Next(...emptyNeighborhood(leaf))
-    console.log(leafMemoTable.size)
-    console.log(neighborhoodMemoTable.size)
+    let nextLeaf;
+
+    let before = process.hrtime.bigint()
+
+    let runs = 1000
+    for (let i = 0; i < runs; i++) nextLeaf = L.Next(...emptyNeighborhood(leaf))
+
+    let after = process.hrtime.bigint()
+
+    let nsPerRun = Number(after - before) / runs
+
+    console.log(1000 * 1000 * 1000 / nsPerRun)
 
     assert.deepEqual([...L.Living(nextLeaf)].sort(order), reference)
   }))
