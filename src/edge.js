@@ -21,7 +21,7 @@ const sourceQuadrants = [
   [D.NE, D.SE]
 ]
 
-export let New = (raw, side, quadrants) => {
+export let New = (raw = Malloc(), side, quadrants) => {
   let [q0, q1] = sourceQuadrants[side]
 
   raw[0] = quadrants[q0].edges[side]
@@ -33,9 +33,9 @@ export let New = (raw, side, quadrants) => {
 export let Equal = (a, b) =>
   typeof a === 'number'
     ? a === b
-    : Equal(a[0], b[0]) && Equal(a[1], b[1])
+    : a[0] === b[0] && a[1] === b[1]
 
-export let Hash = edge =>
-  typeof edge[0] === 'number'
-    ? H.ofArray(edge)
-    : H.ofHashedArray(edge)
+export let Hash = e =>
+  typeof e[0] === 'number'
+    ? H.ofArray(e)
+    : H.ofHashedArray(e)

@@ -2,119 +2,47 @@
 // import * as B from "./branch"
 
 // import * as S from "./store"
-// import * as C from "./canonicalize"
+import {Branch as B} from "./linker"
 // import {assert} from 'chai'
 // import seedrandom from 'seedrandom'
 // import {next, order} from "./util/life"
 // import * as Loc from "./util/location"
 // import {pick, map, go} from "./util/data"
 
-// let leafStore = S.New(L.Malloc)
-// let branchStore = S.New(B.Malloc)
-// let leafCanon = new Map()
-// let branchCanon = new Map()
+// next(Root(N)) -> Root(N) | Root(2N)
 
-// let Canonicalize = (Node, store, canon) =>
-//   C.Canonicalize({
-//     ...pick(['Hash', 'Equal', 'SetDerived'])(Node),
-//     ...pick(['Malloc', 'Free'])(store),
-//     GetCanon: hash => canon.get(hash),
-//     SetCanon: (hash, node) => canon.set(hash, node)
-//   })
+let ceilPow2 = n => Math.pow(Math.ceil(Math.log2(n)), 2)
+let floor32 = n => Math.floor(n * 32) / 32
+let ceil32 = n => Math.ceil(n * 32) / 32
 
-// let Leaf = {
-//   ...Leaf,
-//   ...go(Leaf,
-//       pick(['Copy', 'FromLiving', 'Next', 'Set']),
-//       map(Canonicalize(Leaf, leafStore, leafCanon)))
-// }
+export let FromLiving = locations => {
+  let max = locations.reduce((max, [x, y]) =>
+    Math.max(max, Math.abs(x), Math.abs(y)), 0)
 
-// let CanonicalizeBranch = Canonicalize(Branch, branchStore, branchCanon)
-// let LiftedCB = fn => (...args) => CanonicalizeBranch(fn(...args))
+  let offset = ceilPow2(max)
 
-// let Branch = {
-//   ...Branch,
-//   ...go(Branch,
-//       pick(['Copy', 'FromLiving', 'Next', 'Set']),
-//       map(LiftedCB))
-// }
+  return B.FromLiving(
+    locations.map(([x, y]) => [x + offset, y + offset]),
+    offset * 2
+  )
+}
 
-// let leafSubcontext = () => ({
-//   base: S.New(LR_Malloc),
-//   derived: S.New(L_Malloc),
-//   memoStore: S.New(MN_Malloc),
-//   memoTable: new Map()
-// })
+export let Living = function*(root) {
+  let offset = root.size / 2
 
-// let branchSubcontext = () => ({
-//   base: S.New(BQ_Malloc),
-//   derived: S.New(B_Malloc),
-//   memoStore: S.New(MN_Malloc),
-//   memoTable: new Map()
-// })
+  for (let [x, y] of B.Living(root))
+    yield [x - offset, y - offset]
+}
 
-// let ctx = [
-//   leafSubcontext()
-// ]
+let LocationFromCorner = (root, [x, y]) => {
+  let d = root.size / 2
+  let inRoot = -d <= x && x < d && -d <= y && y < d
 
-// let getSubcontext = size => {
-//   let i = Math.log2(size) - 5
+  return inRoot && [x + d, y + d]
+}
 
-//   while (ctx.length <= )
-// }
+let LocationFromOrigin = (root, [x, y]) => {
+  let d = root.size / 2
 
-// let MN = (Node, n) => MemoNext({
-//   Node,
-//   Malloc: (ctx) => ctx[n].memoStore.Get(),
-//   Free: (ctx, memo) => ctx[n].memoStore.Free(memo),
-//   GetMemo: (ctx, hash) => ctx[n].memoTable.get(hash),
-//   SetMemo: (ctx, hash, memo) => ctx[n].memoTable.set(hash, memo)
-// })
-
-// let LR = LeafRows({
-//   Malloc: ctx => ctx[0].base.Get()
-// })
-
-// let L = Leaf({
-//   LeafRows: LR,
-//   Malloc: ctx => ctx[0].derived.Get()
-// })
-
-// let BQ64 = BranchQuadrants({
-//   child: {...L, Next: MN(L, 0)},
-//   Malloc: ctx => ctx[1].base.Get()
-// })
-
-// let B64 = Branch({
-//   quadrants: BQ64,
-//   Malloc: ctx => ctx[1].derived.Get()
-// })
-
-// let BQ128 = BranchQuadrants({
-//   child: {...B64, Next: MN(B64, 1)},
-//   Malloc: ctx => ctx[2].base.Get()
-// })
-
-// let B128 = Branch({
-//   quadrants: BQ128,
-//   Malloc: ctx => ctx[2].derived.Get()
-// })
-
-// // next(Root(N)) -> Root(N) | Root(2N)
-
-// let New = (ctx, from) => {
-
-// }
-
-// let LocationFromCorner = (root, [x, y]) => {
-//   let d = root.size / 2
-//   let inRoot = -d <= x && x < d && -d <= y && y < d
-
-//   return inRoot && [x + d, y + d]
-// }
-
-// let LocationFromOrigin = (root, [x, y]) => {
-//   let d = root.size / 2
-
-//   return [x - d, y - d]
-// }
+  return [x - d, y - d]
+}

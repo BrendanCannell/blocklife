@@ -9,6 +9,8 @@ export let Malloc = () => {
   branch.hash = 0
   branch.edges = [null, null, null, null]
   branch.corners = [0, 0, 0, 0]
+
+  return branch
 }
 
 const QUADRANTS = [
@@ -40,11 +42,11 @@ let QuadrantLocation = (location, size) => {
 
 export let Hash = H.ofHashedArray
 
-export let SetDerived = (branch, hash = Hash(branch)) => {
+export let SetDerived = ({NewEdge}) => (branch, hash = Hash(branch)) => {
   branch.hash = hash
 
   for (let i = 0; i < 4; i++) {
-    branch.edges[i] = Edge(i, branch)
+    branch.edges[i] = NewEdge(i, branch)
     branch.corners[i] = branch[i].corners[i]
   }
 
@@ -91,6 +93,17 @@ export let FromLiving = ({Recur}) =>
     return raw
   }
 
+export let New = (raw, NW, NE, SW, SE) => {
+  raw.size = NW.size * 2
+  
+  raw[D.NW] = NW
+  raw[D.NE] = NE
+  raw[D.SW] = SW
+  raw[D.SE] = SE
+
+  return raw
+}
+
 export let Get = ({Recur}) =>
   (branch, loc) => {
     let {index, location} = QuadrantLocation(loc, branch.size)
@@ -107,13 +120,11 @@ export let Living = ({Recur}) =>
         yield [x + dx * size, y + dy * size]
   }
 
-export let Next = ({Recur, Neighborhood}) => (
+export let Next = ({Recur}) => (
     raw = Malloc(),
-    {
-      node: branch,
-      edges: [N, S, W, E],
-      corners: [NW, NE, SW, SE]
-    }
+    branch,
+    N,  S,  W,  E,
+    NW, NE, SW, SE
   ) => {
     let B = branch
 
@@ -140,10 +151,10 @@ export let Next = ({Recur, Neighborhood}) => (
       sgE = S [D.NE],
       sgF = SE[D.NW]
     
-    raw[D.NW] = Recur(Neighborhood(sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA))
-    raw[D.NE] = Recur(Neighborhood(sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB))
-    raw[D.SW] = Recur(Neighborhood(sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE))
-    raw[D.SE] = Recur(Neighborhood(sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF))
+    raw[D.NW] = Recur(sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
+    raw[D.NE] = Recur(sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
+    raw[D.SW] = Recur(sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
+    raw[D.SE] = Recur(sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
 
     return raw
   }
