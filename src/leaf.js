@@ -16,7 +16,7 @@ export let Malloc = () => {
 
 export let Hash = H.ofArray
 
-export let SetDerived = (leaf, hash = Hash(leaf)) => {
+export let SetDerived = (ctx, leaf, hash = Hash(leaf)) => {
   leaf.hash = hash
 
   var west = 0
@@ -47,7 +47,7 @@ export let SetDerived = (leaf, hash = Hash(leaf)) => {
   return leaf
 }
   
-export let AddTo = (leaf, {data, Offset, divisions, mask}, x, y) => {
+export let AddTo = (ctx, leaf, {data, Offset, divisions, mask}, x, y) => {
   divisions = divisions | 0; mask = mask | 0;
 
   let base = Offset(x, y) | 0
@@ -63,34 +63,38 @@ export let AddTo = (leaf, {data, Offset, divisions, mask}, x, y) => {
   return data
 }
 
-export let Get = (leaf, [x, y]) => {
+export let Get = (ctx, leaf, [x, y]) => {
   CheckBounds(x, y)
 
   return _Get(leaf, x, y)
 }
 
-export let Living = function*(leaf) {
+export let Living = function*(ctx, leaf) {
   for (let y = 0; y < SIZE; y++)
     for (let x = 0; x < SIZE; x++)
       if (_Get(leaf, x, y) === true)
         yield [x, y]
 }
 
-export let Equal = (a, b) => {
+export let Equal = (ctx, a, b) => {
   for (let i = 0; i < SIZE; i++)
     if (a[i] !== b[i]) return false
   
   return true
 }
 
-export let Copy = (raw, leaf) => {
+export let Copy = ({Malloc}) => (ctx, leaf) => {
+  let raw = Malloc(ctx)
+
   for (let i = 0; i < SIZE; i++)
     raw[i] = leaf[i]
   
   return raw
 }
 
-export let FromLiving = (raw, locations) => {
+export let FromLiving = ({Malloc}) => (ctx, locations) => {
+  let raw = Malloc(ctx)
+
   for (let i = 0; i < SIZE; i++)
     raw[i] = 0
 
@@ -100,7 +104,9 @@ export let FromLiving = (raw, locations) => {
   return raw
 }
 
-export let Set = (raw, leaf, pairs) => {
+export let Set = ({Malloc}) => (ctx, leaf, pairs) => {
+  let raw = Malloc(ctx)
+
   for (let i = 0; i < SIZE; i++)
     raw[i] = leaf[i]
   
@@ -110,99 +116,100 @@ export let Set = (raw, leaf, pairs) => {
   return raw
 }
 
-export let Next = (
-  raw = Malloc(),
+export let Next = ({Malloc}) => (
+  ctx,
   leaf,
   north, south, west, east,
   northwest, northeast, southwest, southeast
 ) => {
+  let raw = Malloc(ctx)
 
-// Set up row data for the row just north of the block (`north.south`)...
+  // Set up row data for the row just north of the block (`north.south`)...
 
-let rowN = north.edges[D.S]
-let westSiblingN = rowN >>> 1 | northwest.corners[D.SE] << SIZE - 1
-let eastSiblingN = rowN <<  1 | northeast.corners[D.SW]
+  let rowN = north.edges[D.S]
+  let westSiblingN = rowN >>> 1 | northwest.corners[D.SE] << SIZE - 1
+  let eastSiblingN = rowN <<  1 | northeast.corners[D.SW]
 
-let siblingCountN_0 = westSiblingN ^ eastSiblingN
-let siblingCountN_1 = westSiblingN & eastSiblingN
+  let siblingCountN_0 = westSiblingN ^ eastSiblingN
+  let siblingCountN_1 = westSiblingN & eastSiblingN
 
-var familyCountN_0 = rowN ^ siblingCountN_0
-var familyCountN_1 = (rowN & siblingCountN_0) | siblingCountN_1
+  var familyCountN_0 = rowN ^ siblingCountN_0
+  var familyCountN_1 = (rowN & siblingCountN_0) | siblingCountN_1
 
-// ...and for the northernmost row of the block (`leaf[0]`), where we start.
+  // ...and for the northernmost row of the block (`leaf[0]`), where we start.
 
-var row = leaf[0]
-let westSibling = row >>> 1 | west.edges[D.E] & WEST_EDGE
-let eastSibling = row <<  1 | east.edges[D.W] >>> 31
+  var row = leaf[0]
+  let westSibling = row >>> 1 | west.edges[D.E] & WEST_EDGE
+  let eastSibling = row <<  1 | east.edges[D.W] >>> 31
 
-var siblingCount_0 = westSibling ^ eastSibling
-var siblingCount_1 = westSibling & eastSibling
+  var siblingCount_0 = westSibling ^ eastSibling
+  var siblingCount_1 = westSibling & eastSibling
 
-var familyCount_0 = row ^ siblingCount_0
-var familyCount_1 = (row & siblingCount_0) | siblingCount_1
+  var familyCount_0 = row ^ siblingCount_0
+  var familyCount_1 = (row & siblingCount_0) | siblingCount_1
 
-// The adjacent columns for the row *south* of the current index
+  // The adjacent columns for the row *south* of the current index
 
-var westS = west.edges[D.E] << 1 | southwest.corners[D.NE]
-var eastS = east.edges[D.W] << 1 | southeast.corners[D.NW]
+  var westS = west.edges[D.E] << 1 | southwest.corners[D.NE]
+  var eastS = east.edges[D.W] << 1 | southeast.corners[D.NW]
 
-// Put the row south of the block in the extra spot at the end of the array
+  // Put the row south of the block in the extra spot at the end of the array
 
-leaf[SIZE] = south.edges[D.N]
+  leaf[SIZE] = south.edges[D.N]
 
-for (let y = 0; y < SIZE; y++) {
-  // To compute the the current row, we need the data for the row south of it (`leaf[y + 1]`)
-  let rowS = leaf[y + 1]
-  let westSiblingS = rowS >>> 1 | westS & WEST_EDGE
-  let eastSiblingS = rowS <<  1 | eastS >>> 31
+  for (let y = 0; y < SIZE; y++) {
+    // To compute the the current row, we need the data for the row south of it (`leaf[y + 1]`)
+    let rowS = leaf[y + 1]
+    let westSiblingS = rowS >>> 1 | westS & WEST_EDGE
+    let eastSiblingS = rowS <<  1 | eastS >>> 31
 
-  // Total living siblings (2 bits)
-  let siblingCountS_0 = westSiblingS ^ eastSiblingS
-  let siblingCountS_1 = westSiblingS & eastSiblingS
+    // Total living siblings (2 bits)
+    let siblingCountS_0 = westSiblingS ^ eastSiblingS
+    let siblingCountS_1 = westSiblingS & eastSiblingS
 
-  // Total living family (2 bits)
-  let familyCountS_0 = rowS ^ siblingCountS_0
-  let familyCountS_1 = (rowS & siblingCountS_0) | siblingCountS_1
+    // Total living family (2 bits)
+    let familyCountS_0 = rowS ^ siblingCountS_0
+    let familyCountS_1 = (rowS & siblingCountS_0) | siblingCountS_1
 
-  // Get total number of adjacents cells living.
-  // A cell's adjacent cells are its siblings and its cousins.
-  //   siblings -> cells directly west/east of a cell
-  //   cousins -> family directly north/east of a cell, i.e., the cells directly north/east and their siblings
+    // Get total number of adjacents cells living.
+    // A cell's adjacent cells are its siblings and its cousins.
+    //   siblings -> cells directly west/east of a cell
+    //   cousins -> family directly north/east of a cell, i.e., the cells directly north/east and their siblings
 
-  let xor0 = familyCountN_0 ^ familyCountS_0
-  let and0 = familyCountN_0 & familyCountS_0
-  let sum0 = siblingCount_0 ^ xor0
-  let carry0 = (siblingCount_0 & xor0) | and0
+    let xor0 = familyCountN_0 ^ familyCountS_0
+    let and0 = familyCountN_0 & familyCountS_0
+    let sum0 = siblingCount_0 ^ xor0
+    let carry0 = (siblingCount_0 & xor0) | and0
 
-  let xor1 = familyCountN_1 ^ familyCountS_1
-  let and1 = familyCountN_1 & familyCountS_1
-  let sum1 = siblingCount_1 ^ xor1
-  let carry1 = (siblingCount_1 & xor1) | and1
-  
-  let isAlive = row
-  let twoOrThreeNeighbors = (carry0 ^ sum1) & ~carry1
-  let nextRow = twoOrThreeNeighbors & (isAlive | sum0)
+    let xor1 = familyCountN_1 ^ familyCountS_1
+    let and1 = familyCountN_1 & familyCountS_1
+    let sum1 = siblingCount_1 ^ xor1
+    let carry1 = (siblingCount_1 & xor1) | and1
+    
+    let isAlive = row
+    let twoOrThreeNeighbors = (carry0 ^ sum1) & ~carry1
+    let nextRow = twoOrThreeNeighbors & (isAlive | sum0)
 
-  // Store the result
-  raw[y] = nextRow
+    // Store the result
+    raw[y] = nextRow
 
-  // Cache the row data for the next iteration
-  familyCountN_0 = familyCount_0
-  familyCountN_1 = familyCount_1
+    // Cache the row data for the next iteration
+    familyCountN_0 = familyCount_0
+    familyCountN_1 = familyCount_1
 
-  row = rowS
-  siblingCount_0 = siblingCountS_0
-  siblingCount_1 = siblingCountS_1
-  familyCount_0 = familyCountS_0
-  familyCount_1 = familyCountS_1
+    row = rowS
+    siblingCount_0 = siblingCountS_0
+    siblingCount_1 = siblingCountS_1
+    familyCount_0 = familyCountS_0
+    familyCount_1 = familyCountS_1
 
-  westS <<= 1
-  eastS <<= 1
-}
+    westS <<= 1
+    eastS <<= 1
+  }
 
-leaf[SIZE] = 0
+  leaf[SIZE] = 0
 
-return raw
+  return raw
 }
 
 const WEST_EDGE = 0x80000000

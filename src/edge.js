@@ -8,7 +8,7 @@ export const E = 1
 
 export let Malloc = () => [null, null]
 
-export let SetDerived = (edge, hash = Hash(edge)) => {
+export let SetDerived = (ctx, edge, hash = Hash(edge)) => {
   edge.hash = hash
 
   return edge
@@ -21,7 +21,8 @@ const sourceQuadrants = [
   [D.NE, D.SE]
 ]
 
-export let New = (raw = Malloc(), side, quadrants) => {
+export let New = ({Malloc}) => (ctx, side, quadrants) => {
+  let raw = Malloc(ctx)
   let [q0, q1] = sourceQuadrants[side]
 
   raw[0] = quadrants[q0].edges[side]
@@ -30,7 +31,7 @@ export let New = (raw = Malloc(), side, quadrants) => {
   return raw
 }
 
-export let Equal = (a, b) =>
+export let Equal = (ctx, a, b) =>
   typeof a === 'number'
     ? a === b
     : a[0] === b[0] && a[1] === b[1]

@@ -18,7 +18,7 @@ let clear = ctx => {
 let rng = seedrandom(0)
 
 let size = 256
-let empties = () => [...Array(8)].map(() => B.FromLiving([], size))
+let empties = () => [...Array(8)].map(() => B.FromLiving(store, [], size))
 let RandomLocations = () => Loc.RandomLocations(size, rng, {
   range: 64,
   offset: (size - 64)/2,
@@ -38,8 +38,8 @@ let withRandoms = (n, fn) => () => {
     let setAlive = rl.alive.slice(0, 5).map(loc => [loc, true])
     let setDead = rl.dead.slice(0, 5).map(loc => [loc, false])
 
-    let start = B.FromLiving(startAlive, size)
-    let node = B.Set(start, [...setAlive, ...setDead])
+    let start = B.FromLiving(store, startAlive, size)
+    let node = B.Set(store, start, [...setAlive, ...setDead])
 
     fn({node, ...rl})
   }
@@ -49,27 +49,27 @@ describe('Branch', () => {
   let n = 3
 
   it(".get/set(<out-of-bounds-cell>) throws exception", withRandoms(1, ({node, outOfBounds}) =>
-    outOfBounds.forEach(cell => assert.throws(() => B.Get(node, cell)))
-    || outOfBounds.forEach(cell => assert.throws(() => B.Set(node, cell, false)))))
+    outOfBounds.forEach(cell => assert.throws(() => B.Get(store, node, cell)))
+    || outOfBounds.forEach(cell => assert.throws(() => B.Set(store, node, cell, false)))))
 
   it(".alive() = set cells", withRandoms(n, ({alive, node}) => {
-    assert.deepEqual([...B.Living(node)].sort(order).slice(0, 10), alive.slice(0, 10))
+    assert.deepEqual([...B.Living(store, node)].sort(order).slice(0, 10), alive.slice(0, 10))
   }))
 
   it(".get(<set cell>) = true", withRandoms(n, ({node, alive}) =>
-    alive.forEach(cell => assert.isTrue(B.Get(node, cell)))))
+    alive.forEach(cell => assert.isTrue(B.Get(store, node, cell)))))
 
   it(".get(<non-set cell>) = false", withRandoms(n, ({node, dead}) =>
-    dead.forEach(cell => assert.isFalse(B.Get(node, cell)))))
+    dead.forEach(cell => assert.isFalse(B.Get(store, node, cell)))))
 
   it(".next(...empties) agrees with reference", withRandoms(n, ({node, alive}) => {
     let reference = next(alive).filter(InBounds)
     var nextNode;
     
     for (let i = 0; i < 10; i++) {
-      nextNode = B.Next(node, ...empties())
+      nextNode = B.Next(store, node, ...empties())
     }
 
-    assert.deepEqual([...B.Living(nextNode)].sort(order), reference)
+    assert.deepEqual([...B.Living(store, nextNode)].sort(order), reference)
   }))
 })

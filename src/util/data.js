@@ -1,5 +1,5 @@
 export let pipe = ([op, ...rest]) =>
-  (...args) => rest.reduceRight((acc, fn) => fn(acc), op(...args))
+  (...args) => rest.reduce((acc, fn) => fn(acc), op(...args))
 
 export let go = (data, ...ops) => pipe(ops)(data)
 

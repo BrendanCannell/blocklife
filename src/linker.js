@@ -6,6 +6,14 @@ import * as Edge from "./edge"
 import * as C from "./canonicalize"
 import {pick, map, go, pipe} from "./util/data"
 
+let pipeCtx = ([op, ...ops]) => {
+  if (ops.length === 0) return op
+
+  let continuation = pipeCtx(ops)
+
+  return (ctx, ...rest) => continuation(ctx, op(ctx, ...rest))
+}
+
 let log = x => console.log(x) || x
 
 let CanonicalStore = Malloc => {
@@ -31,18 +39,26 @@ let Store = () => ({
   Edge: CanonicalStore(Edge.Malloc)
 })
 
-let Canonicalize = (Node, store) =>
-  C.Canonicalize({
-    ...pick(['Hash', 'Equal', 'SetDerived'])(Node),
-    ...store
+let Canonicalize = (Module, toStore) =>
+  C.WithContext({
+    ...pick(['Hash', 'Equal', 'SetDerived'])(Module),
+    Free: (ctx, branch) => toStore(ctx).Free(branch),
+    GetCanon: (ctx, hash) => toStore(ctx).GetCanon(hash),
+    SetCanon: (ctx, hash, branch) => toStore(ctx).SetCanon(hash, branch)
   })
 
 let Tree = () =>  {
   let store = Store()
 
-  let C8izedNeighborhood = Canonicalize(Neighborhood, store.Neighborhood)(Neighborhood.New)
+  let C8izedNeighborhood = pipeCtx([
+    Neighborhood.New({Malloc: ({Neighborhood}) => Neighborhood.Malloc()}),
+    Canonicalize(Neighborhood, ctx => ctx.Neighborhood)
+  ])
 
-  let C8izedEdge = Canonicalize(Edge, store.Edge)(Edge.New)
+  let C8izedEdge = pipeCtx([
+    Edge.New({Malloc: ({Edge}) => Edge.Malloc()}),
+    Canonicalize(Edge, ctx => ctx.Edge)
+  ])
 
   let MemoizeNext = Next => (...args) => {
     let neighborhood = C8izedNeighborhood(...args)
@@ -54,14 +70,17 @@ let Tree = () =>  {
   }
 
   let MemoizedLeaf = (() => {
-    let C8ize = Canonicalize(Leaf, store.Leaf)
-    
+    let C8ize = fn => pipeCtx([fn, Canonicalize(Leaf, ctx => ctx.Leaf)])
+
+    let SetMalloc = fn => fn({Malloc: ctx => ctx.Leaf.Malloc()})
+
     return {
       ...Leaf,
       ...go(Leaf,
           pick(['Copy', 'FromLiving', 'Set']),
+          map(SetMalloc),
           map(C8ize)),
-      Next: MemoizeNext(C8ize(Leaf.Next))
+      Next: MemoizeNext(C8ize(SetMalloc(Leaf.Next)))
     }
   })()
 
@@ -70,49 +89,69 @@ let Tree = () =>  {
       ...Branch,
       SetDerived: Branch.SetDerived({NewEdge: C8izedEdge})
     }
-    let {Next} = B
-    let C8ize = Canonicalize(B, store.Branch)
 
-    let lift = now => fn => (...later) => now(fn(...later))
+    let C8ize = fn => pipeCtx([fn, Canonicalize(B, ctx => ctx.Branch)])
+
+    let SetMalloc = fn => fn({Malloc: ctx => ctx.Branch.Malloc()})
+
+    let {Next} = B
+
+    let lift = after => fn => before => after(before(fn))
     
     return {
       ...B,
       ...go(B,
           pick(['Copy', 'FromLiving', 'Set']),
-          map(lift(C8ize))),
-      Next: lift(pipe([C8ize, MemoizeNext]))(Next)
+          map(lift(pipe([SetMalloc, C8ize])))),
+      Next: lift(pipe([SetMalloc, C8ize, MemoizeNext]))(Next)
     }
   })()
 
   let Fix = (LeafCase, toBranchCase) => {
-    let Dispatcher = (node, ...rest) =>
+    let Dispatcher = (ctx, node, ...rest) =>
       node.size === Leaf.SIZE
-        ? LeafCase(node, ...rest)
-        : BranchCase(node, ...rest)
+        ? LeafCase(ctx, node, ...rest)
+        : BranchCase(ctx, node, ...rest)
         
     let BranchCase = toBranchCase({Recur: Dispatcher})
 
     return Dispatcher
   }
 
+  let LiftFix = (LeafCase, toBranchCase) => {
+    let Dispatcher = (ctx, node, ...rest) =>
+      node.size === Leaf.SIZE
+        ? LeafCase(ctx, node, ...rest)
+        : BranchCase(ctx, node, ...rest)
+        
+    let BranchCase = toBranchCase(fn => opts => {debugger; return fn({...opts, Recur: Dispatcher})})
+
+    return Dispatcher
+  }
+
   let FixBranch = ({Leaf, Branch}) => {
     let polymorphicFirstArg =
-      ['AddTo', 'Copy', 'Equal', 'Get', 'Living', 'Next', 'Set']
+      ['AddTo', 'Get', 'Equal', 'Living']
         .map(name => [name, Fix(Leaf[name], Branch[name])])
 
-    let FromLiving = (locations, size) =>
+    let liftedPolymorphicFirstArg =
+      ['Copy', 'Next', 'Set']
+        .map(name => [name, LiftFix(Leaf[name], Branch[name])])
+
+    let FromLiving = (ctx, locations, size) =>
       size === Leaf.SIZE
-        ? LeafCase(locations, size)
-        : BranchCase(locations, size)
+        ? LeafCase(ctx, locations, size)
+        : BranchCase(ctx, locations, size)
 
     let LeafCase = Leaf.FromLiving
-    let BranchCase = Branch.FromLiving({Recur: FromLiving})
+    let BranchCase = Branch.FromLiving(fn => opts => fn({...opts, Recur: FromLiving}))
     
     return {
       Leaf,
       Branch: {
         ...Branch,
         ...Object.fromEntries(polymorphicFirstArg),
+        ...Object.fromEntries(liftedPolymorphicFirstArg),
         FromLiving
       }
     }

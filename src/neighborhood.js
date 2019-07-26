@@ -9,12 +9,13 @@ export let Malloc = () => ({
   next: null
 })
 
-export let New = (
-      raw = Malloc(),
+export let New = ({Malloc}) => (
+      ctx,
       node,
       N, S, W, E,
       NW, NE, SW, SE
     ) => {
+  let raw = Malloc(ctx)
   raw.node = node
   
   raw.edges[D.N] = N.edges[D.N]
@@ -30,7 +31,7 @@ export let New = (
   return raw
 }
 
-export let SetDerived = neighborhood => {
+export let SetDerived = (ctx, neighborhood) => {
   neighborhood.next = null
 
   return neighborhood
@@ -42,7 +43,7 @@ export let Hash = ({node, edges, corners}) => H.of(
   H.ofArray(corners)
 )
 
-export let Equal = (a, b) => {
+export let Equal = (ctx, a, b) => {
   if (a.node !== b.node) return false
 
   for (let i = 0; i < 4; i++)

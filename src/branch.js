@@ -42,11 +42,11 @@ let QuadrantLocation = (location, size) => {
 
 export let Hash = H.ofHashedArray
 
-export let SetDerived = ({NewEdge}) => (branch, hash = Hash(branch)) => {
+export let SetDerived = ({NewEdge}) => (ctx, branch, hash = Hash(branch)) => {
   branch.hash = hash
 
   for (let i = 0; i < 4; i++) {
-    branch.edges[i] = NewEdge(i, branch)
+    branch.edges[i] = NewEdge(ctx, i, branch)
     branch.corners[i] = branch[i].corners[i]
   }
 
@@ -54,28 +54,30 @@ export let SetDerived = ({NewEdge}) => (branch, hash = Hash(branch)) => {
 }
 
 export let AddTo = ({Recur}) =>
-  (branch, opts, x, y) => {
+  (ctx, branch, opts, x, y) => {
     let {size} = branch
 
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      Recur(branch[index], opts, x + dx * size, y + dy * size)
+      Recur(ctx, branch[index], opts, x + dx * size, y + dy * size)
   }
 
-export let Copy = ({Recur}) =>
-  (raw, branch) => {
+export let Copy = ({Recur, Malloc}) =>{ debugger;
+  return(ctx, branch) => {
+    let raw = Malloc(ctx)
     raw.size = branch.size
 
     for (let i = 0; i < 4; i++)
-      raw[i] = Recur(branch[i])
+      raw[i] = Recur(ctx, branch[i])
     
     return raw
-  }
+  }}
 
 export let Equal = ({Recur}) =>
-  (a, b) => D.QUADRANTS.every(i => Recur(a[i], b[i]))
+  (ctx, a, b) => D.QUADRANTS.every(i => Recur(ctx, a[i], b[i]))
 
-export let FromLiving = ({Recur}) =>
-  (raw, locations, size) => {
+export let FromLiving = ({Recur, Malloc}) =>
+  (ctx, locations, size) => {
+    let raw = Malloc(ctx)
     raw.size = size
 
     // From live locations
@@ -88,14 +90,15 @@ export let FromLiving = ({Recur}) =>
     }
 
     for (let i = 0; i < 4; i++)
-      raw[i] = Recur(partitions[i], size / 2)
+      raw[i] = Recur(ctx, partitions[i], size / 2)
 
     return raw
   }
 
-export let New = (raw, NW, NE, SW, SE) => {
+export let New = ({Malloc}) => (ctx, NW, NE, SW, SE) => {
+  let raw = Malloc(ctx)
   raw.size = NW.size * 2
-  
+
   raw[D.NW] = NW
   raw[D.NE] = NE
   raw[D.SW] = SW
@@ -105,27 +108,29 @@ export let New = (raw, NW, NE, SW, SE) => {
 }
 
 export let Get = ({Recur}) =>
-  (branch, loc) => {
+  (ctx, branch, loc) => {
     let {index, location} = QuadrantLocation(loc, branch.size)
 
-    return Recur(branch[index], location)
+    return Recur(ctx, branch[index], location)
   }
 
-export let Living = ({Recur}) =>
-  function*(branch) {
+export let Living = ({Recur}) =>{ debugger;
+  return function*(ctx, branch) {
     let {size} = branch
+    debugger
 
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      for (let [x, y] of Recur(branch[index]))
+      for (let [x, y] of Recur(ctx, branch[index]))
         yield [x + dx * size, y + dy * size]
-  }
+  }}
 
-export let Next = ({Recur}) => (
-    raw = Malloc(),
+export let Next = ({Recur, Malloc}) => (
+    ctx,
     branch,
     N,  S,  W,  E,
     NW, NE, SW, SE
   ) => {
+    let raw = Malloc(ctx)
     let B = branch
 
     raw.size = B.size
@@ -151,18 +156,19 @@ export let Next = ({Recur}) => (
       sgE = S [D.NE],
       sgF = SE[D.NW]
     
-    raw[D.NW] = Recur(sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
-    raw[D.NE] = Recur(sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
-    raw[D.SW] = Recur(sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
-    raw[D.SE] = Recur(sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
+    raw[D.NW] = Recur(ctx, sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
+    raw[D.NE] = Recur(ctx, sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
+    raw[D.SW] = Recur(ctx, sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
+    raw[D.SE] = Recur(ctx, sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
 
     return raw
   }
 
-export let Set = ({Recur}) =>
-  (raw, branch, pairs) => {
+export let Set = ({Recur, Malloc}) =>
+  (ctx, branch, pairs) => {
     let {size} = branch
 
+    let raw = Malloc(ctx)
     raw.size = size
 
     let partitions = [[], [], [], []]
@@ -177,7 +183,7 @@ export let Set = ({Recur}) =>
       raw[i] =
         partitions[i].length === 0
           ? branch[i]
-          : Recur(branch[i], partitions[i])
+          : Recur(ctx, branch[i], partitions[i])
 
     return raw
   }
