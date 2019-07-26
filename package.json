@@ -33,6 +33,7 @@
     "source-map-support": "^0.5.12"
   },
   "dependencies": {
-    "@babel/runtime": "^7.5.2"
+    "@babel/runtime": "^7.5.2",
+    "rho-contracts": "0.0.5"
   }
 }

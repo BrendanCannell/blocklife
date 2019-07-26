@@ -1,6 +1,7 @@
 // Naive reference implementation of Life
 
-export let order = ([x0, y0], [x1, y1]) => y0 !== y1 ? y0 - y1 : x0 - x1
+import {AscXGroupedByDescY} from "./location"
+export {AscXGroupedByDescY as order}
 
 export let neighborhood = ([x, y]) => [
   [x-1, y+1], [x, y+1], [x+1, y+1],
