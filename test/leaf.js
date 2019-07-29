@@ -1,6 +1,6 @@
 import {assert} from 'chai'
 import seedrandom from 'seedrandom'
-import {next, order} from "./util/life"
+import {next} from "./util/life"
 import * as Loc from "./util/location"
 import {map} from "../src/util"
 
@@ -16,8 +16,10 @@ let empty4 = () => [...Array(4)].map(() => L.FromLiving(store, []))
 
 let emptyNeighborhood = node => [node, ...empty4(), ...empty4()]
 
-let RandomLocations = () => Loc.RandomLocations(size, rng, {alive: 256, dead: 16, outOfBounds: 16})
+let RandomLocations = () => Loc.Randoms(size, rng, {alive: 256, dead: 16, outOfBounds: 16})
 let InBounds = Loc.InBounds(size)
+
+let order = Loc.AscXGroupedByDescY
 
 let withRandoms = (n, fn) => () => {
   for (; n > 0; n--) {

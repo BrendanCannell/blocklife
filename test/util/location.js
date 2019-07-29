@@ -2,15 +2,7 @@ import {order} from "./life"
 
 export let InBounds = size => ([x, y]) => x >= 0 && x < size && y >= 0 && y < size
 
-export let AllIndexes = size => [...Array(size).keys()]
-
-export let AllLocations = size => {
-  let idxs = AllIndexes(size)
-  
-  return idxs.flatMap(x => idxs.map(y => [x, y])).sort(order)
-}
-
-export let RandomLocations = (size, rng,
+export let Randoms = (size, rng,
     {
       range = size,
       offset = 0,
@@ -31,6 +23,8 @@ export let RandomLocations = (size, rng,
 
     return !bounded(n) ? n : bad()
   }
+
+  let order = AscXGroupedByDescY
 
   let removeDuplicates = a => {
     a.sort(order)

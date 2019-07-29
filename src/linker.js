@@ -4,7 +4,7 @@ import * as Branch from "./branch"
 import * as Neighborhood from "./neighborhood"
 import * as Edge from "./edge"
 import * as C from "./canonicalize"
-import {pick, map, go, pipe, pipeCtx} from "./util"
+import {apply, pick, map, go, lift, liftOpts, name, pipe, pipeCtx, withNames} from "./util"
 
 let CanonicalStore = Malloc => {
   let store = S.New(Malloc)
@@ -50,7 +50,7 @@ let Tree = () =>  {
     Canonicalize(Edge, ctx => ctx.Edge)
   ])
 
-  let MemoizeNext = Next => (...args) => {
+  let MemoizeNext = Next => function memoNext(...args) {
     let neighborhood = C8izedNeighborhood(...args)
 
     if (!neighborhood.next)
@@ -74,28 +74,34 @@ let Tree = () =>  {
     }
   })()
 
-  let MemoizedBranch = (() => {
+  let MemoizedBranch = (({NewEdge}) => {
     let B = {
       ...Branch,
-      SetDerived: Branch.SetDerived({NewEdge: C8izedEdge})
+      SetDerived: Branch.SetDerived({NewEdge})
     }
 
-    let C8ize = fn => pipeCtx([fn, Canonicalize(B, ctx => ctx.Branch)])
+    let BranchStore = ctx => ctx.Branch
 
-    let SetMalloc = fn => fn({Malloc: ctx => ctx.Branch.Malloc()})
+    let BranchMalloc = ctx => BranchStore(ctx).Malloc()
 
-    let {Next} = B
+    let SetMalloc = apply({Malloc: BranchMalloc})
 
-    let lift = after => fn => before => after(before(fn))
+    let C8izeBranch = Canonicalize(B, BranchStore)
+
+    let C8izeBranchConstructor = constructor => pipeCtx([constructor, C8izeBranch])
+
+    let ConfigureBranchConstructor = pipe([SetMalloc, C8izeBranchConstructor])
+
+    let ConfigureAndMemoizeNext = pipe([ConfigureBranchConstructor, MemoizeNext])
     
     return {
       ...B,
       ...go(B,
           pick(['Copy', 'FromLiving', 'Set']),
-          map(lift(pipe([SetMalloc, C8ize])))),
-      Next: lift(pipe([SetMalloc, C8ize, MemoizeNext]))(Next)
+          map(lift(ConfigureBranchConstructor))),
+      Next: lift(ConfigureAndMemoizeNext)(B.Next),
     }
-  })()
+  })({NewEdge: C8izedEdge})
 
   let Fix = (LeafCase, toBranchCase) => {
     let Dispatcher = (ctx, node, ...rest) =>
@@ -108,15 +114,15 @@ let Tree = () =>  {
     return Dispatcher
   }
 
-  let LiftFix = (LeafCase, toBranchCase) => {
-    let Dispatcher = (ctx, node, ...rest) =>
+  let LiftFix = (LeafCase, toBranchCase, name = 'SwitchNode') => {
+    let SwitchNode = (ctx, node, ...rest) =>
       node.size === Leaf.SIZE
         ? LeafCase(ctx, node, ...rest)
         : BranchCase(ctx, node, ...rest)
         
-    let BranchCase = toBranchCase(fn => opts => {debugger; return fn({...opts, Recur: Dispatcher})})
+    let BranchCase = toBranchCase(liftOpts({Recur: SwitchNode}))
 
-    return Dispatcher
+    return SwitchNode
   }
 
   let FixBranch = ({Leaf, Branch}) => {
@@ -134,7 +140,7 @@ let Tree = () =>  {
         : BranchCase(ctx, locations, size)
 
     let LeafCase = Leaf.FromLiving
-    let BranchCase = Branch.FromLiving(fn => opts => fn({...opts, Recur: FromLiving}))
+    let BranchCase = Branch.FromLiving(liftOpts({Recur: FromLiving}))
     
     return {
       Leaf,

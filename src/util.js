@@ -1,3 +1,5 @@
+export let apply = arg => fn => fn(arg)
+
 export let asPairs = fn => obj =>
   Object.fromEntries(fn(Object.entries(obj)))
 
@@ -6,10 +8,24 @@ export let filter = fn => asPairs(obj =>
 
 export let go = (data, ...ops) => pipe(ops)(data)
 
+export let lift = after => fn => before =>
+  after(before(fn))
+
+export let liftOpts = afterOpts => fn => beforeOpts =>
+  fn({...beforeOpts, ...afterOpts})
+
 export let log = x => console.log(x) || x
 
 export let map = fn => asPairs(obj =>
   obj.map(([key, value]) => [key, fn(value, key)]))
+
+export let name = namedFn => {
+  let [[name, fn]] = Object.entries(namedFn)
+
+  Object.defineProperty(fn, 'name', {value: name})
+
+  return fn
+}
 
 export let pick = keys => filter(([key]) => keys.includes(key))
 
@@ -28,6 +44,8 @@ export let pipeCtx = ([op, ...ops]) => {
 
   return pipeCtx
 }
+
+export let withNames = map((fn, name) => name({[name]: fn}))
 
 export let zip = objs => {
   let keys = Object.keys(Object.assign({}, ...objs))
