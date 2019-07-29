@@ -10,23 +10,57 @@ export let AllLocations = size => {
   return idxs.flatMap(x => idxs.map(y => [x, y])).sort(order)
 }
 
-export let RandomLocations = (size, rng) => {
-  let all = AllLocations(size)
+export let RandomLocations = (size, rng,
+    {
+      range = size,
+      offset = 0,
+      alive: aliveCount = 0,
+      dead: deadCount = 0,
+      outOfBounds = 0
+    }) => {
+  let bounded = n => n >= 0 && n <= size
 
-  let alive = all.filter(() => rng() > 0.5).sort(order)
-
-  let dead = all.filter(pair => !alive.includes(pair)).sort(order)
+  let good = () => {
+    let n = range * rng() + offset | 0
+  
+    return bounded(n) ? n : good()
+  }
 
   let bad = () => {
     let n = (rng() - 0.5) * Number.MAX_SAFE_INTEGER | 0
 
-    return n < 0 || n >= size ? n : bad()
+    return !bounded(n) ? n : bad()
   }
 
-  let outOfBounds = alive.map(([x, y], i) => 
-         i % 3 === 0 && [x,     bad()]
-      || i % 3 === 1 && [bad(), y    ]
-      || i % 3 === 2 && [bad(), bad()])
+  let removeDuplicates = a => {
+    a.sort(order)
 
-  return {all, alive, dead, outOfBounds}
+    let deduped = [a[0]]
+
+    for (let i = 1; i < a.length; i++)
+      if (0 !== order(a[i], a[i - 1])) deduped.push(a[i])
+    
+    return deduped
+  }
+
+  let inBounds = []
+  while (inBounds.length < aliveCount + deadCount) {
+    while (inBounds.length < aliveCount + deadCount)
+      inBounds.push([good(), good()])
+    
+    inBounds = removeDuplicates(inBounds)
+  }
+
+  let alive = inBounds.splice(0, aliveCount).sort(order)
+
+  let dead = inBounds.splice(aliveCount).sort(order)
+
+  return {
+    alive,
+    dead,
+    outOfBounds: [...Array(outOfBounds)].map((_, i) => 
+         i % 3 === 0 && [good(), bad()]
+      || i % 3 === 1 && [bad(), good()]
+      || i % 3 === 2 && [bad(), bad()])
+  }
 }

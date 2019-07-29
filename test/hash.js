@@ -1,4 +1,4 @@
-import {ofArray, reducer, finalize} from "../src/hash"
+import * as H from "../src/hash"
 import {assert} from 'chai'
 
 let testString = (str, reference) => () => {
@@ -14,11 +14,15 @@ let testString = (str, reference) => () => {
 
   let i32s = shifted.map(chk => chk.reduce((acc, c) => acc + c, 0))
 
-  let h1 = ofArray(i32s)
-  let h2 = finalize(i32s.reduce(reducer, i32s.length * 4))
+  let h1 = H.finalize(i32s.reduce(H.reducer, i32s.length * 4))
+  let h2 = H.ofArray(i32s)
+  let h3 = H.ofHashedArray(i32s.map(hash => ({hash})))
+  let h4 = H.of(...i32s)
 
   assert.strictEqual(h1, reference)
   assert.strictEqual(h2, reference)
+  assert.strictEqual(h3, reference)
+  assert.strictEqual(h4, reference)
 }
 
 describe("Hash", () => {
