@@ -8,6 +8,7 @@ export let filter = fn => asPairs(obj =>
 
 export let go = (data, ...ops) => pipe(ops)(data)
 
+// (B -> C) -> A -> (A -> B) -> C
 export let lift = after => fn => before =>
   after(before(fn))
 
