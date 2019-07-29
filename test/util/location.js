@@ -1,4 +1,19 @@
-import {order} from "./life"
+export let AscXGroupedByDescY = ([x0, y0], [x1, y1]) => y0 !== y1 ? y0 - y1 : x0 - x1
+
+export let Equal = (l0, l1) => AscXGroupedByDescY(l0, l1) === 0
+
+export let EqualSet = (locs0, locs1) =>{
+  let l0 = [...locs0]; l0.sort(AscXGroupedByDescY)
+  let l1 = [...locs1]; l1.sort(AscXGroupedByDescY)
+
+  if (l0.length !== l1.length) return false
+  
+  let len = l0.length
+  for (let i = 0; i < len; i++)
+    if (!Equal(l0[i], l1[i])) return false
+  
+  return true
+}
 
 export let InBounds = size => ([x, y]) => x >= 0 && x < size && y >= 0 && y < size
 
