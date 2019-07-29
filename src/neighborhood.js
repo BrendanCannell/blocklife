@@ -1,13 +1,10 @@
-import * as H from "./hash"
 import * as D from "./direction"
-import isLeaf from "./isLeaf"
+import {Neighborhood as Equal} from "./equal"
+import {Neighborhood as Hash} from "./hash"
+import {Neighborhood as Malloc} from "./malloc"
+import {Neighborhood as SetDerived} from "./set-derived"
 
-export let Malloc = () => ({
-  node: null,
-  edges: [null, null, null, null],
-  corners: [0, 0, 0, 0],
-  next: null
-})
+export {Equal, Hash, Malloc, SetDerived}
 
 export let New = ({Malloc}) => (
       ctx,
@@ -29,26 +26,4 @@ export let New = ({Malloc}) => (
   raw.corners[D.SE] = SE.corners[D.NW]
 
   return raw
-}
-
-export let SetDerived = (ctx, neighborhood) => {
-  neighborhood.next = null
-
-  return neighborhood
-}
-
-export let Hash = ({node, edges, corners}) => H.of(
-  node.hash,
-  isLeaf(node) ? H.ofArray(edges) : H.ofHashedArray(edges),
-  H.ofArray(corners)
-)
-
-export let Equal = (ctx, a, b) => {
-  if (a.node !== b.node) return false
-
-  for (let i = 0; i < 4; i++)
-    if (a.edges[i] !== b.edges[i] || a.corners[i] !== b.corners[i])
-      return false
-
-  return true
 }

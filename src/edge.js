@@ -1,18 +1,15 @@
-import * as H from "./hash"
 import * as D from "./direction"
+import {Edge as Equal} from "./equal"
+import {Edge as Hash} from "./hash"
+import {Edge as Malloc} from "./malloc"
+import {Edge as SetDerived} from "./set-derived"
+
+export {Equal, Hash, Malloc, SetDerived}
 
 export const N = 0
 export const S = 1
 export const W = 0
 export const E = 1
-
-export let Malloc = () => [null, null]
-
-export let SetDerived = (ctx, edge, hash = Hash(edge)) => {
-  edge.hash = hash
-
-  return edge
-}
 
 const sourceQuadrants = [
   [D.NW, D.NE],
@@ -30,13 +27,3 @@ export let New = ({Malloc}) => (ctx, side, quadrants) => {
 
   return raw
 }
-
-export let Equal = (ctx, a, b) =>
-  typeof a === 'number'
-    ? a === b
-    : a[0] === b[0] && a[1] === b[1]
-
-export let Hash = e =>
-  typeof e[0] === 'number'
-    ? H.ofArray(e)
-    : H.ofHashedArray(e)

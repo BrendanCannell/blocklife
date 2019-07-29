@@ -1,6 +1,23 @@
+import isLeaf from "./is-leaf"
+
+export let Branch = ofHashedArray
+
+export let Edge = e =>
+  typeof e[0] === 'number'
+    ? ofArray(e)
+    : ofHashedArray(e)
+
+export let Leaf = ofArray
+
+export let Neighborhood = ({node, edges, corners}) => of(
+  node.hash,
+  isLeaf(node) ? ofArray(edges) : ofHashedArray(edges),
+  ofArray(corners)
+)
+
 // Uses Paul Hsieh's SuperFastHash algorithm
 
-let of = (...args) => {
+export function of(...args) {
   let len = args.length
   let hash = len * 4
 
@@ -10,7 +27,7 @@ let of = (...args) => {
   return finalize(hash)
 }
 
-let ofArray = array => {
+export function ofArray(array) {
   let len = array.length
   let hash = len * 4
 
@@ -20,7 +37,7 @@ let ofArray = array => {
   return finalize(hash)
 }
 
-let ofHashedArray = array => {
+export function ofHashedArray(array) {
   let len = array.length
   let hash = len * 4
 
@@ -30,7 +47,7 @@ let ofHashedArray = array => {
   return finalize(hash)
 }
 
-let reducer = (hashAcc, n) => {
+export function reducer(hashAcc, n) {
   hashAcc = hashAcc | 0
 
   let bits0_15  = n & 0x0000FFFF
@@ -43,7 +60,7 @@ let reducer = (hashAcc, n) => {
   return h3 + (h3 >>> 11) | 0
 }
 
-let finalize = hashAcc => {
+export function finalize(hashAcc) {
   let h = hashAcc | 0
 
   h = h ^ (h <<  3)
@@ -55,5 +72,3 @@ let finalize = hashAcc => {
 
   return h
 }
-
-export {of, ofArray, ofHashedArray, reducer, finalize}
