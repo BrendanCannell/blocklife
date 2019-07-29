@@ -4,17 +4,7 @@ import * as Branch from "./branch"
 import * as Neighborhood from "./neighborhood"
 import * as Edge from "./edge"
 import * as C from "./canonicalize"
-import {pick, map, go, pipe} from "./util/data"
-
-let pipeCtx = ([op, ...ops]) => {
-  if (ops.length === 0) return op
-
-  let continuation = pipeCtx(ops)
-
-  return (ctx, ...rest) => continuation(ctx, op(ctx, ...rest))
-}
-
-let log = x => console.log(x) || x
+import {pick, map, go, pipe, pipeCtx} from "./util"
 
 let CanonicalStore = Malloc => {
   let store = S.New(Malloc)

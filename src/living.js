@@ -8,11 +8,11 @@ export let Leaf = function*(ctx, leaf) {
         yield [x, y]
 }
 
-export let Branch = ({Recur}) =>
+export let Branch = ({Recur: Living}) =>
   function*(ctx, branch) {
     let {size} = branch
 
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      for (let [x, y] of Recur(ctx, branch[index]))
+      for (let [x, y] of Living(ctx, branch[index]))
         yield [x + dx * size, y + dy * size]
   }

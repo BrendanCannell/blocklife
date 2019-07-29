@@ -97,7 +97,7 @@ export let Leaf = ({Malloc}) => (
   return raw
 }
 
-export let Branch = ({Recur, Malloc}) => (
+export let Branch = ({Recur: Next, Malloc}) => (
   ctx,
   branch,
   N,  S,  W,  E,
@@ -129,10 +129,10 @@ export let Branch = ({Recur, Malloc}) => (
     sgE = S [D.NE],
     sgF = SE[D.NW]
   
-  raw[D.NW] = Recur(ctx, sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
-  raw[D.NE] = Recur(ctx, sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
-  raw[D.SW] = Recur(ctx, sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
-  raw[D.SE] = Recur(ctx, sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
+  raw[D.NW] = Next(ctx, sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
+  raw[D.NE] = Next(ctx, sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
+  raw[D.SW] = Next(ctx, sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
+  raw[D.SE] = Next(ctx, sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
 
   return raw
 }

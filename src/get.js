@@ -7,9 +7,9 @@ export let Leaf = (ctx, leaf, [x, y]) => {
   return _Get(leaf, x, y)
 }
 
-export let Branch = ({Recur}) =>
+export let Branch = ({Recur: Get}) =>
   (ctx, branch, loc) => {
     let {index, location} = QuadrantLocation(loc, branch.size)
 
-    return Recur(ctx, branch[index], location)
+    return Get(ctx, branch[index], location)
   }

@@ -13,7 +13,7 @@ export let Leaf = ({Malloc}) => (ctx, locations) => {
   return raw
 }
 
-export let Branch = ({Recur, Malloc}) =>
+export let Branch = ({Recur: FromLiving, Malloc}) =>
   (ctx, locations, size) => {
     let raw = Malloc(ctx)
     raw.size = size
@@ -28,7 +28,7 @@ export let Branch = ({Recur, Malloc}) =>
     }
 
     for (let i = 0; i < 4; i++)
-      raw[i] = Recur(ctx, partitions[i], size / 2)
+      raw[i] = FromLiving(ctx, partitions[i], size / 2)
 
     return raw
   }

@@ -2,7 +2,7 @@ import {assert} from 'chai'
 import seedrandom from 'seedrandom'
 import {next, order} from "./util/life"
 import * as Loc from "./util/location"
-import * as D from "../src/util/data"
+import {map} from "../src/util"
 
 import Tree from "../src/linker"
 
@@ -32,7 +32,7 @@ let withRandoms = (n, fn) => () => {
   for (; n > 0; n--) {
     let rl = RandomLocations()
 
-    D.map(x => x.Clear())(store)
+    map(x => x.Clear())(store)
 
     let startAlive = rl.alive.slice(5)
     let setAlive = rl.alive.slice(0, 5).map(loc => [loc, true])

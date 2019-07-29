@@ -13,7 +13,7 @@ export let Leaf = ({Malloc}) => (ctx, leaf, pairs) => {
   return raw
 }
 
-export let Branch = ({Recur, Malloc}) =>
+export let Branch = ({Recur: Set, Malloc}) =>
   (ctx, branch, pairs) => {
     let {size} = branch
 
@@ -32,7 +32,7 @@ export let Branch = ({Recur, Malloc}) =>
       raw[i] =
         partitions[i].length === 0
           ? branch[i]
-          : Recur(ctx, branch[i], partitions[i])
+          : Set(ctx, branch[i], partitions[i])
 
     return raw
   }
