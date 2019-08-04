@@ -1,20 +1,3 @@
-import isLeaf from "./is-leaf"
-
-export let Branch = ofHashedArray
-
-export let Edge = e =>
-  typeof e[0] === 'number'
-    ? ofArray(e)
-    : ofHashedArray(e)
-
-export let Leaf = ofArray
-
-export let Neighborhood = ({node, edges, corners}) => of(
-  node.hash,
-  isLeaf(node) ? ofArray(edges) : ofHashedArray(edges),
-  ofArray(corners)
-)
-
 // Uses Paul Hsieh's SuperFastHash algorithm
 
 export function of(...args) {

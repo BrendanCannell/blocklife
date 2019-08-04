@@ -1,5 +1,5 @@
-import {CheckBounds, _Get} from "./leaf"
-import {QuadrantLocation} from "./branch"
+import {CheckBounds, _Get} from "../leaf"
+import {QuadrantLocation} from "../branch"
 
 export let Leaf = (ctx, leaf, [x, y]) => {
   CheckBounds(x, y)

@@ -1,5 +1,5 @@
-import {SIZE} from "./leaf"
-import {QUADRANTS} from "./branch"
+import {SIZE} from "../leaf"
+import {QUADRANTS} from "../branch"
 
 export let Branch = ({Recur}) =>
   (ctx, opts, branch, x, y) => {

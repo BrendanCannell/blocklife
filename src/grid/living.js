@@ -1,5 +1,5 @@
-import {_Get, SIZE} from "./leaf"
-import {QUADRANTS} from "./branch"
+import {_Get, SIZE} from "../leaf"
+import {QUADRANTS} from "../branch"
 
 export let Leaf = function*(ctx, leaf) {
   for (let y = 0; y < SIZE; y++)

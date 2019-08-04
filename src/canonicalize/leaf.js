@@ -1,24 +1,23 @@
-import * as D from "./direction"
-import {SIZE, WEST_EDGE, EAST_EDGE} from "./leaf"
+import CanonicalizeConstructor from "./constructor"
+import * as U from "../util"
+let Canonicalizable = {EqualLeaf, HashLeaf, SetDerivedLeaf}
+export default CanonicalizeConstructor('Leaf', U.stripRight('Leaf')(Canonicalizable))
 
-export let Branch = ({NewEdge}) => (ctx, branch, hash) => {
-  branch.hash = hash
-
-  for (let i = 0; i < 4; i++) {
-    branch.edges[i] = NewEdge(ctx, i, branch)
-    branch.corners[i] = branch[i].corners[i]
-  }
-
-  return branch
+function EqualLeaf(a, b) {
+  for (let i = 0; i < SIZE; i++)
+    if (a[i] !== b[i]) return false
+  
+  return true
 }
 
-export let Edge = (ctx, edge, hash) => {
-  edge.hash = hash
-
-  return edge
+import {ofArray} from "../hash"
+function HashLeaf(leaf) {
+  return ofArray(leaf)
 }
 
-export let Leaf = (ctx, leaf, hash) => {
+import * as D from "../direction"
+import {SIZE, WEST_EDGE, EAST_EDGE} from "../leaf"
+function SetDerivedLeaf(ctx, leaf, hash) {
   leaf.hash = hash
 
   var west = 0
@@ -47,12 +46,6 @@ export let Leaf = (ctx, leaf, hash) => {
   leaf.population = population
 
   return leaf
-}
-
-export let Neighborhood = (ctx, neighborhood) => {
-  neighborhood.next = null
-
-  return neighborhood
 }
 
 // Number of set bits in a U32. See "Hacker's Delight" chapter 5

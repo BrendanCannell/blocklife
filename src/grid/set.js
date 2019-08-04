@@ -1,8 +1,8 @@
-import {Mutate, SIZE} from "./leaf.js"
-import {QuadrantLocation} from "./branch.js"
+import {Mutate, SIZE} from "../leaf.js"
+import {QuadrantLocation} from "../branch.js"
 
-export let Leaf = ({Malloc}) => (ctx, leaf, pairs) => {
-  let raw = Malloc(ctx)
+export let Leaf = function SetLeaf(ctx, leaf, pairs) {
+  let raw = ctx.Leaf.Malloc(leaf)
 
   for (let i = 0; i < SIZE; i++)
     raw[i] = leaf[i]
@@ -13,11 +13,11 @@ export let Leaf = ({Malloc}) => (ctx, leaf, pairs) => {
   return raw
 }
 
-export let Branch = ({Recur: Set, Malloc}) =>
-  (ctx, branch, pairs) => {
+export let Branch = ({Recur: Set}) =>
+  function SetBranch(ctx, branch, pairs) {
     let {size} = branch
 
-    let raw = Malloc(ctx)
+    let raw = ctx.Branch.Malloc(branch)
     raw.size = size
 
     let partitions = [[], [], [], []]

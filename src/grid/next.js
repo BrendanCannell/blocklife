@@ -1,13 +1,13 @@
-import * as D from "./direction"
-import {SIZE, WEST_EDGE} from "./leaf"
+import * as D from "../direction"
+import {SIZE, WEST_EDGE} from "../leaf"
 
-export let Leaf = ({Malloc}) => (
+export let Leaf = function NextLeaf(
   ctx,
   leaf,
   north, south, west, east,
   northwest, northeast, southwest, southeast
-) => {
-  let raw = Malloc(ctx)
+) {
+  let raw = ctx.Leaf.Malloc(leaf)
 
   // Set up row data for the row just north of the block (`north.south`)...
 
@@ -97,13 +97,13 @@ export let Leaf = ({Malloc}) => (
   return raw
 }
 
-export let Branch = ({Recur: Next, Malloc}) => (
+export let Branch = ({Recur: Next}) => function NextBranch(
   ctx,
   branch,
   N,  S,  W,  E,
   NW, NE, SW, SE
-) => {
-  let raw = Malloc(ctx)
+) {
+  let raw = ctx.Branch.Malloc(branch)
   let B = branch
 
   raw.size = B.size

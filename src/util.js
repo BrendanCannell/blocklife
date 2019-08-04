@@ -20,13 +20,8 @@ export let log = x => console.log(x) || x
 export let map = fn => asPairs(obj =>
   obj.map(([key, value]) => [key, fn(value, key)]))
 
-export let name = namedFn => {
-  let [[name, fn]] = Object.entries(namedFn)
-
-  Object.defineProperty(fn, 'name', {value: name})
-
-  return fn
-}
+export let mapKeys = fn => asPairs(obj =>
+  obj.map(([key, value]) => [fn(key, value), value]))
 
 export let pick = keys => filter(([key]) => keys.includes(key))
 
@@ -36,21 +31,34 @@ export let pipe = ([op, ...rest]) =>
 export let pipeCtx = ([op, ...ops]) => {
   function pipeCtx(ctx, ...args) {
     var result = op(ctx, ...args)
-
     for (let fn of ops)
       result = fn(ctx, result)
-    
     return result
   }
-
   return pipeCtx
 }
 
-export let withNames = map((fn, name) => name({[name]: fn}))
+export let setName = (fn, name) => {
+  Object.defineProperty(fn, 'name', {value: name})
+  return fn
+}
+
+export let stripLeft = prefix => mapKeys(name => {
+  if (prefix !== name.substring(0, prefix.length))
+    throw Error(`Expected prefix '${prefix}': ${name}`)
+  return name.substring(prefix.length)
+})
+
+export let stripRight = suffix => mapKeys(name => {
+  if (suffix !== name.substring(name.length - suffix.length))
+    throw Error(`Expected suffix '${suffix}': ${name}`)
+  return name.substring(0, name.length - suffix.length)
+})
+
+export let withNames = map((fn, name) => setName(fn, name))
 
 export let zip = objs => {
   let keys = Object.keys(Object.assign({}, ...objs))
   let entries = keys.map(k => [k, objs.map(obj => obj[k])])
-
   return Object.fromEntries(entries)
 }
