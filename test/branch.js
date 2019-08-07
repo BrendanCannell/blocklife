@@ -1,7 +1,7 @@
 import {assert} from 'chai'
 import seedrandom from 'seedrandom'
-import {next} from "./util/life"
 import * as Loc from "./util/location"
+import Glider from "./util/glider"
 
 import Grid from "../src/grid"
 import Store from "../src/canonical-store"
@@ -12,7 +12,6 @@ let store = Store()
 let rng = seedrandom(0)
 
 let size = 256
-let empties = () => [...Array(8)].map(() => G.FromLiving(store, size, []))
 let RandomLocations = () => Loc.Randoms(size, rng, {
   range: 64,
   offset: (size - 64)/2,
@@ -58,14 +57,19 @@ describe('Branch', () => {
   it(".get(<non-set cell>) = false", withRandoms(n, ({node, dead}) =>
     dead.forEach(cell => assert.isFalse(G.Get(store, node, cell)))))
 
-  it(".next(...empties) agrees with reference", withRandoms(n, ({node, alive}) => {
-    let reference = next(alive).filter(InBounds)
-    var nextNode;
-    
-    for (let i = 0; i < 10; i++) {
-      nextNode = G.Next(store, node, ...empties())
+  it(".next(...empties) agrees with reference", () => {
+    let empties = store => [...Array(8)].map(() => G.FromLiving(store, size, []))
+    let store1 = Store(), store2 = Store()
+    let stepCount = 4 * 10
+    let reference = Glider.SE(stepCount)
+    var grid = G.FromLiving(store1, size, Glider.SE())
+    for (let i = 0; i < stepCount; i++) {
+      store2.Clear()
+      grid = G.Next(store2, grid, ...empties(store1))
+      let tmp = store2
+      store2 = store1
+      store1 = tmp
     }
-
-    assert.deepEqual([...G.Living(store, nextNode)].sort(order), reference)
-  }))
+    assert.deepEqual([...G.Living(store, grid)].sort(order), reference)
+  })
 })

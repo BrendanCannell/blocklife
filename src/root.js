@@ -1,50 +1,116 @@
-// // import * as L from "./leaf"
-// // import * as B from "./branch"
+import {default as G} from "./grid"
+import * as D from "./direction"
+import * as U from "./util"
+import {Branch as NewBranch} from "./canonicalize/new"
 
-// // import * as S from "./store"
-// import {Branch as B} from "./linker"
-// // import {assert} from 'chai'
-// // import seedrandom from 'seedrandom'
-// // import {next, order} from "./util/life"
-// // import * as Loc from "./util/location"
-// // import {pick, map, go} from "./util/data"
+let ceilPow2 = n => Math.pow(2, Math.ceil(Math.log2(n)))
+let floor32 = n => Math.floor(n * 32) / 32
+let ceil32 = n => Math.ceil(n * 32) / 32
 
-// // next(Root(N)) -> Root(N) | Root(2N)
+export function FromLiving(ctx, locations) {
+  let max = locations.reduce((max, [x, y]) =>
+        Math.max(max, Math.abs(x), Math.abs(y)), 0)
+    , offset = Math.max(ceilPow2(max), 32)
+    , grid = G.FromLiving(
+        ctx,
+        offset * 2,
+        locations.map(([x, y]) => [x + offset, y + offset]),
+      )
+    , empty = G.FromLiving(ctx, offset * 2, [])
 
-// let ceilPow2 = n => Math.pow(Math.ceil(Math.log2(n)), 2)
-// let floor32 = n => Math.floor(n * 32) / 32
-// let ceil32 = n => Math.ceil(n * 32) / 32
+  return {grid, empty}
+}
 
-// export let FromLiving = locations => {
-//   let max = locations.reduce((max, [x, y]) =>
-//     Math.max(max, Math.abs(x), Math.abs(y)), 0)
+export function* Living(ctx, root) {
+  let offset = root.grid.size / 2
 
-//   let offset = ceilPow2(max)
+  for (let [x, y] of G.Living(ctx, root.grid))
+    yield [x - offset, y - offset]
+}
 
-//   return B.FromLiving(
-//     locations.map(([x, y]) => [x + offset, y + offset]),
-//     offset * 2
-//   )
-// }
+let check = (branch, size = branch.size) => {
+  for (let i = 0; i < 4; i++){
+    if (branch[i].size !== size / 2) {
+      console.log({i, branch})
+      throw Error("Size mismatch")
+    }
+    if (branch[i].size > 32) check(branch[i], size/2)
+  }
 
-// export let Living = function*(root) {
-//   let offset = root.size / 2
+  return branch
+}
 
-//   for (let [x, y] of B.Living(root))
-//     yield [x - offset, y - offset]
-// }
+export function Next(ctx, root) {
+  check(root.grid)
+  let g = root.grid
+    , e = root.empty
+    , center = G.Next(ctx, g, e, e, e, e, e, e, e, e)
+    , N =      G.Next(ctx, e, e, g, e, e, e, e, e, e)
+    , S =      G.Next(ctx, e, g, e, e, e, e, e, e, e)
+    , W =      G.Next(ctx, e, e, e, e, g, e, e, e, e)
+    , E =      G.Next(ctx, e, e, e, g, e, e, e, e, e)
+    , mustGrow = (
+           N.population !== 0
+        || S.population !== 0
+        || W.population !== 0
+        || E.population !== 0
+      )
 
-// // export let Next = 
+  let newRoot = mustGrow
+    ? Grow(ctx, center, N, S, W, E)
+    : {
+      grid: center,
+      empty: G.FromLiving(ctx, center.size, [])
+    }
 
-// let LocationFromCorner = (root, [x, y]) => {
-//   let d = root.size / 2
-//   let inRoot = -d <= x && x < d && -d <= y && y < d
+  check(newRoot.grid)
 
-//   return inRoot && [x + d, y + d]
-// }
+  return newRoot
+}
 
-// let LocationFromOrigin = (root, [x, y]) => {
-//   let d = root.size / 2
+function Grow(ctx, center, north, south, west, east) {
+  let e = G.FromLiving(ctx, center.size / 2, [])
+    , grid = NewBranch(ctx,
+        NewBranch(ctx,
+          e,
+          north[D.SW],
+          west[D.NE],
+          center[D.NW]
+        ),
+        NewBranch(ctx,
+          north[D.SE],
+          e,
+          center[D.NE],
+          east[D.NW]
+        ),
+        NewBranch(ctx,
+          west[D.SE],
+          center[D.SW],
+          e,
+          south[D.NW]
+        ),
+        NewBranch(ctx,
+          center[D.SE],
+          east[D.SW],
+          south[D.NE],
+          e
+        )
+      )
+  return {
+    grid,
+    empty: G.FromLiving(ctx, center.size * 2, [])
+  }
+}
 
-//   return [x - d, y - d]
-// }
+function LocationFromCorner(root, [x, y]) {
+  let d = root.size / 2
+    , inRoot = -d <= x && x < d && -d <= y && y < d
+
+  return inRoot && [x + d, y + d]
+}
+
+function LocationFromOrigin (root, [x, y]) {
+  let d = root.size / 2
+
+  return [x - d, y - d]
+}

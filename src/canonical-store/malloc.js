@@ -7,6 +7,7 @@ export let Branch = function MallocBranch() {
   branch.hash = 0
   branch.edges = [null, null, null, null]
   branch.corners = [0, 0, 0, 0]
+  branch.population = 0
 
   return branch
 }
@@ -20,6 +21,7 @@ export let Leaf = function MallocLeaf() {
   leaf.hash = 0
   leaf.edges = [0, 0, 0, 0]
   leaf.corners = [0, 0, 0, 0]
+  leaf.population = 0
 
   return leaf
 }

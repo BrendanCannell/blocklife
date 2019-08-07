@@ -1,10 +1,8 @@
-import C8ize from "./canonicalize/neighborhood"
-import {Neighborhood} from "./new"
-
-let C8ized = C8ize(Neighborhood)
+import {Neighborhood} from "./canonicalize/new"
+import * as U from "./util"
 
 let MemoizeNext = Next => function MemoizedNext(...args) {
-  let neighborhood = C8ized(...args)
+  let neighborhood = Neighborhood(...args)
 
   if (!neighborhood.next)
     neighborhood.next = Next(...args)

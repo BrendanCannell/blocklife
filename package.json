@@ -4,8 +4,8 @@
   "description": "An implementation of Conway's Game of Life",
   "main": "index.js",
   "scripts": {
-    "test": "npm run build && ./node_modules/.bin/mocha test/leaf.js test/branch.js test/hash.js --no-diff --require @babel/register",
-    "test:inspect": "npm run build && ./node_modules/.bin/mocha --inspect-brk test/leaf.js test/branch.js test/hash.js --no-diff --require @babel/register",
+    "test": "npm run build && ./node_modules/.bin/mocha test/root.js test/hash.js test/util/glider.js --no-diff --require @babel/register",
+    "test:inspect": "npm run build && ./node_modules/.bin/mocha --inspect-brk test/branch.js test/hash.js --no-diff --require @babel/register",
     "build": "./node_modules/.bin/babel --presets @babel/preset-env src -d lib",
     "prepublish": "npm run build"
   },

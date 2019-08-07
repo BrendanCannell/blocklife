@@ -3,7 +3,8 @@ import * as U from "../util"
 export default function MakeMakeCanonicalizingConstructor(typeName, c8izable) {
   let Canonicalize = MakeCanonicalize(typeName, c8izable)
   return function MakeCanonicalizingConstructor(Constructor) {
-    let CanonicalizingConstructor = (ctx, ...args) => Canonicalize(ctx, Constructor(ctx, ...args))
+    let CanonicalizingConstructor = (ctx, ...args) => {
+      return Canonicalize(ctx, Constructor(ctx, ...args))}
     if (Constructor.name)
       U.setName(CanonicalizingConstructor, 'Canonicalizing' + Constructor.name)
     return CanonicalizingConstructor
@@ -18,8 +19,9 @@ function MakeCanonicalize(typeName, {Hash, Equal, SetDerived}) {
       , bin = hash
     do {
       var canonical = GetCanon(bin)
-    } while (canonical && !Equal(newObj, canonical) && (bin++, true))
-    if (bin !== hash) console.log("COLLISION")
+      var collision = canonical && !Equal(newObj, canonical)
+      if (collision) bin++
+    } while (collision)
     if (!canonical) {
       SetCanon(bin, newObj)
       return SetDerived(ctx, newObj, hash)

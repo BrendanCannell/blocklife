@@ -1,5 +1,6 @@
 import * as D from "../direction"
 import {SIZE, WEST_EDGE} from "../leaf"
+import * as U from "../util"
 
 export let Leaf = function NextLeaf(
   ctx,
@@ -103,6 +104,12 @@ export let Branch = ({Recur: Next}) => function NextBranch(
   N,  S,  W,  E,
   NW, NE, SW, SE
 ) {
+  let size = branch.size
+  for (let i = 1; i < arguments.length; i++)
+    if (arguments[i].size !== size) {
+      console.log(U.map(grid => grid.size)({branch, N,  S,  W,  E, NW, NE, SW, SE}))
+      throw Error("Size mismatch")
+    }
   let raw = ctx.Branch.Malloc(branch)
   let B = branch
 

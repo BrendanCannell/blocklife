@@ -10,7 +10,7 @@ function EqualLeaf(a, b) {
   return true
 }
 
-import {ofArray} from "../hash"
+import {ofArray} from "../fnv-hash"
 function HashLeaf(leaf) {
   return ofArray(leaf)
 }

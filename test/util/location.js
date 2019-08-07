@@ -73,3 +73,5 @@ export let Randoms = (size, rng,
       || i % 3 === 2 && [bad(), bad()])
   }
 }
+
+export let Translate = ([dx, dy], locs) => locs.map(([x, y]) => [x + dx, y + dy])

@@ -1,3 +1,5 @@
+import {inspect as UtilInspect} from 'util'
+
 export let apply = arg => fn => fn(arg)
 
 export let asPairs = fn => obj =>
@@ -7,6 +9,8 @@ export let filter = fn => asPairs(obj =>
   obj.filter(fn))
 
 export let go = (data, ...ops) => pipe(ops)(data)
+
+export let inspect = x => (log(UtilInspect(x, false, null, true)), x)
 
 // (B -> C) -> A -> (A -> B) -> C
 export let lift = after => fn => before =>

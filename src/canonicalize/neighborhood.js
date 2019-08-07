@@ -12,7 +12,7 @@ function EqualNeighborhood(a, b) {
 }
 
 import {IsLeaf} from "../leaf"
-import {of, ofArray, ofHashedArray} from "../hash"
+import {of, ofArray, ofHashedArray} from "../fnv-hash"
 function HashNeighborhood({node, edges, corners}) {
   let edgeHash = IsLeaf(node) ? ofArray(edges) : ofHashedArray(edges)
   return of(node.hash, edgeHash, ofArray(corners))

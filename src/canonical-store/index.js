@@ -12,8 +12,9 @@ let Substores = U.map(Substore)(Malloc)
 function Store() {
   let substores = U.map(S => S())(Substores)
   let Clear = () => U.map(S => S.Clear())(substores)
+  let Show = () => U.map(S => S.Show())(substores)
 
-  return {...substores, Clear}
+  return {...substores, Clear, Show}
 }
 
 export default Store
