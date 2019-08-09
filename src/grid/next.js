@@ -115,31 +115,50 @@ export let Branch = ({Recur: Next}) => function NextBranch(
 
   raw.size = B.size
 
-  let
-    sg0 = NW[D.SE],
-    sg1 = N [D.SW],
-    sg2 = N [D.SE],
-    sg3 = NE[D.SW],
+  let subgrids = [
+     NW[D.SE],
+     N [D.SW],
+     N [D.SE],
+     NE[D.SW],
 
-    sg4 = W [D.NE],
-    sg5 = B [D.NW],
-    sg6 = B [D.NE],
-    sg7 = E [D.NW],
+     W [D.NE],
+     B [D.NW],
+     B [D.NE],
+     E [D.NW],
 
-    sg8 = W [D.SE],
-    sg9 = B [D.SW],
-    sgA = B [D.SE],
-    sgB = E [D.SW],
+     W [D.SE],
+     B [D.SW],
+     B [D.SE],
+     E [D.SW],
 
-    sgC = SW[D.NE],
-    sgD = S [D.NW],
-    sgE = S [D.NE],
-    sgF = SE[D.NW]
+     SW[D.NE],
+     S [D.NW],
+     S [D.NE],
+     SE[D.NW]
+  ]
   
-  raw[D.NW] = Next(ctx, sg5, sg1, sg9, sg4, sg6, sg0, sg2, sg8, sgA)
-  raw[D.NE] = Next(ctx, sg6, sg2, sgA, sg5, sg7, sg1, sg3, sg9, sgB)
-  raw[D.SW] = Next(ctx, sg9, sg5, sgD, sg8, sgA, sg4, sg6, sgC, sgE)
-  raw[D.SE] = Next(ctx, sgA, sg6, sgE, sg9, sgB, sg5, sg7, sgD, sgF)
+  for (let q = 0; q < 4; q++) {
+    let xOffset = 1 + (q & 1)      // [1, 2, 1, 2]
+      , yOffset = 2 + (q & 2) << 1 // [4, 4, 8, 8]
+      , _ = xOffset + yOffset
+      , N = -4
+      , S =  4
+      , W = -1
+      , E =  1
+      , sg = subgrids
+    
+    raw[q] = Next(
+      ctx,
+      sg[_],
+      sg[_ + N],
+      sg[_ + S],
+      sg[_ + W],
+      sg[_ + E],
+      sg[_ + N + W],
+      sg[_ + N + E],
+      sg[_ + S + W],
+      sg[_ + S + E])
+  }
 
   return raw
 }
