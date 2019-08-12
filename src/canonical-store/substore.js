@@ -3,20 +3,18 @@ import S from "../substore"
 export default MallocCopy => {
   let Substore = S(MallocCopy)
 
-  return function CanonicalSubstore() {
-    let store = Substore()
-    let hashTable = new Map()
-    
+  return function CanonicalSubstore(substore = Substore(), hashTable = new Map()) {
     return {
-      Malloc: store.Malloc,
-      Free: store.Free,
+      Malloc: substore.Malloc,
+      Free: substore.Free,
       GetCanon: hash => hashTable.get(hash),
       SetCanon: (hash, node) => hashTable.set(hash, node),
-      Clear: () => {store.Clear(); hashTable.clear()},
+      Clear: () => substore.Clear() && hashTable.clear(),
       Show: () => ({
-        store: store.Show(),
+        store: substore.Show(),
         hashTable: hashTable.size
-      })
+      }),
+      Copy: () => CanonicalSubstore(substore.Copy(), new Map(hashTable))
     }
   }
 }

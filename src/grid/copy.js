@@ -1,20 +1,17 @@
 import {SIZE} from "../leaf"
 
-export let Leaf = function CopyLeaf(ctx, leaf) {
-  let raw = ctx.Leaf.Malloc()
+export let Branch = ({Malloc, Recur: Copy}) =>
+  function CopyBranch(size, branch) {
+    let raw = Malloc()
+    for (let i = 0; i < 4; i++)
+      raw[i] = Copy(size/2, branch[i])
+    return raw
+  }
 
-  for (let i = 0; i < SIZE; i++)
-    raw[i] = leaf[i]
-  
-  return raw
-}
-
-export let Branch = ({Recur}) => function CopyBranch(ctx, branch) {
-  let raw = ctx.Branch.Malloc()
-  raw.size = branch.size
-
-  for (let i = 0; i < 4; i++)
-    raw[i] = Recur(ctx, branch[i])
-  
-  return raw
-}
+export let Leaf = ({Malloc}) =>
+  function CopyLeaf(_size, leaf) {
+    let raw = Malloc()
+    for (let i = 0; i < SIZE; i++)
+      raw[i] = leaf[i]
+    return raw
+  }

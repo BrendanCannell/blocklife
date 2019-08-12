@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.5.2",
+    "@brendancannell/dysc": "^0.2.0",
     "rho-contracts": "0.0.5"
   }
 }

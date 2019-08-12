@@ -1,18 +1,17 @@
 import {_Get, SIZE} from "../leaf"
 import {QUADRANTS} from "../branch"
 
-export let Leaf = function*(ctx, leaf) {
-  for (let y = 0; y < SIZE; y++)
-    for (let x = 0; x < SIZE; x++)
-      if (_Get(leaf, x, y) === true)
-        yield [x, y]
-}
-
 export let Branch = ({Recur: Living}) =>
-  function*(ctx, branch) {
-    let {size} = branch
-
+  function*(size, branch) {
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      for (let [x, y] of Living(ctx, branch[index]))
+      for (let [x, y] of Living(size/2, branch[index]))
         yield [x + dx * size, y + dy * size]
+  }
+
+export let Leaf = () =>
+  function*(_size, leaf) {
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++)
+        if (_Get(leaf, x, y) === true)
+          yield [x, y]
   }

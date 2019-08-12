@@ -1,20 +1,10 @@
 import * as D from "./direction"
-import * as U from "./util"
+import {Malloc} from "./context"
 
-export let Branch = function NewBranch(ctx, q0, q1, q2, q3) {
-  let s = q0.size
-  if (s !== q1.size || s !== q2.size || s !== q3.size) {
-    console.log({q0, q1, q2, q3})
-    throw Error('Size mismatch')
-  }
-
-  let raw = ctx.Branch.Malloc()
-  raw.size = s * 2
-  raw[0] = q0
-  raw[1] = q1
-  raw[2] = q2
-  raw[3] = q3
-
+export let Branch = function NewBranch(...quadrants) {
+  let raw = Malloc.Branch()()
+  for (let i = 0; i < 4; i++)
+    raw[i] = quadrants[i]
   return raw
 }
 
@@ -25,38 +15,30 @@ const sourceQuadrants = [
   [D.NE, D.SE]
 ]
 
-export let Edge = function NewEdge(ctx, side, quadrants) {
-  let raw = ctx.Edge.Malloc()
-  let [q0, q1] = sourceQuadrants[side]
-
-  raw[0] = quadrants[q0].edges[side]
-  raw[1] = quadrants[q1].edges[side]
-  raw.gen = ctx.gen
-
+export let Edge = function NewEdge(side, quadrants) {
+  let raw = Malloc.Edge()()
+    , sq = sourceQuadrants[side]
+  for (let i = 0; i < 2; i++)
+    raw[i] = quadrants[sq[i]].edges[side]
   return raw
 }
 
 export let Neighborhood = function NewNeighborhood(
-    ctx,
+    size,
     node,
-    // N,  S,  W,  E,
-    // NW, NE, SW, SE
+    N,  S,  W,  E,
+    NW, NE, SW, SE
   ) {
-  let size = node.size
-  for (let i = 1; i < arguments.length; i++)
-    if (arguments[i].size !== size) {
-      let [ctx, node, N,  S,  W,  E, NW, NE, SW, SE] = arguments
-      console.log(U.map(grid => grid.size)({node, N,  S,  W,  E, NW, NE, SW, SE}))
-      throw Error("Size mismatch")
-    }
-  let raw = ctx.Neighborhood.Malloc()
+  let raw = Malloc.Neighborhood()()
   raw.node = node
+  raw.size = size
 
+  let adjacent = [N, S, W, E, NW, NE, SW, SE]
   for (let i = 0; i < 4; i++) {
-    let oppositeEdge = (i + 1) % 2
-    raw.edges[i] = arguments[i+2].edges[oppositeEdge]
-    let oppositeCorner = 3 - i
-    raw.corners[i] = arguments[i+6].corners[oppositeCorner]
+    let oppositeEdge   = (i + 1) & 1
+      , oppositeCorner = 3 - i
+    raw.edges  [i] = adjacent[i]  .edges  [oppositeEdge]
+    raw.corners[i] = adjacent[i+4].corners[oppositeCorner]
   }
 
   return raw

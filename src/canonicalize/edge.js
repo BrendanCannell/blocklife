@@ -1,7 +1,11 @@
 import CanonicalizeConstructor from "./constructor"
+import {Canon} from "../context"
 import * as U from "../util"
 let Canonicalizable = {EqualEdge, HashEdge, SetDerivedEdge}
-export default CanonicalizeConstructor('Edge', U.stripRight('Edge')(Canonicalizable))
+export default CanonicalizeConstructor(
+    'Edge',
+    U.stripRight('Edge')(Canonicalizable),
+    Canon.Edge)
 
 function EqualEdge(a, b) {
   return a[0] === b[0] && a[1] === b[1]
@@ -13,7 +17,7 @@ function HashEdge(e) {
   return isLeaf ? ofArray(e) : ofHashedArray(e)
 }
 
-function SetDerivedEdge(ctx, edge, hash) {
+function SetDerivedEdge(edge, hash) {
   edge.hash = hash
   return edge
 }

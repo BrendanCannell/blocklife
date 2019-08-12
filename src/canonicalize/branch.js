@@ -1,7 +1,11 @@
 import CanonicalizeConstructor from "./constructor"
+import {Canon} from "../context"
 import * as U from "../util"
 let Canonicalizable = {EqualBranch, HashBranch, SetDerivedBranch}
-export default CanonicalizeConstructor('Branch', U.stripRight('Branch')(Canonicalizable))
+export default CanonicalizeConstructor(
+    'Branch',
+    U.stripRight('Branch')(Canonicalizable),
+    Canon.Branch)
 
 function EqualBranch(a, b) {
   for (let i = 0; i < 4; i++)
@@ -17,17 +21,12 @@ function HashBranch(branch) {
 import CanonicalizeEdgeConstructor from "./edge"
 import {Edge as NewEdge} from "../new"
 let CanonicalizedNewEdge = CanonicalizeEdgeConstructor(NewEdge)
-function SetDerivedBranch(ctx, branch, hash) {
-  let s = branch[0].size
+function SetDerivedBranch(branch, hash) {
   branch.hash = hash
   var population = 0
   for (let i = 0; i < 4; i++) {
-    if (branch[i].size !== s) {
-      console.log(branch)
-      throw Error('Size mismatch')
-    }
     population += branch[i].population
-    branch.edges[i] = CanonicalizedNewEdge(ctx, i, branch)
+    branch.edges[i] = CanonicalizedNewEdge(i, branch)
     branch.corners[i] = branch[i].corners[i]
   }
   branch.population = population

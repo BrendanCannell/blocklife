@@ -4,7 +4,6 @@ export const EAST_EDGE = 0x00000001
 
 export let CheckBounds = (x, y) => {
   let err = explanation => {throw TypeError(`Out of bounds: ${explanation} in ${[x, y]}`)}
-
   if (x < 0) err("x < 0")
   if (y < 0) err("y < 0")
   if (x >= SIZE) err("x >= " + SIZE)
@@ -13,28 +12,16 @@ export let CheckBounds = (x, y) => {
 
 export let _Get = (leaf, x, y) => {
   let row = leaf[y]
-  let mask = WEST_EDGE >>> x
-
+    , mask = WEST_EDGE >>> x
   return (row & mask) !== 0
-}
-
-export let IsLeaf = gridOrSize => {
-  let size = typeof gridOrSize === 'number'
-    ? gridOrSize
-    : gridOrSize.size
-
-  return size === SIZE
 }
 
 export let Mutate = (leaf, [x, y], state) => {
   CheckBounds(x, y)
-
   let row = leaf[y]
-  let mask = WEST_EDGE >>> x
-
+    , mask = WEST_EDGE >>> x
   leaf[y] = state ?
       row | mask
     : row & ~mask
-
   return leaf
 }

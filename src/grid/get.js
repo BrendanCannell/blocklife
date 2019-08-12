@@ -1,15 +1,14 @@
 import {CheckBounds, _Get} from "../leaf"
 import {QuadrantLocation} from "../branch"
 
-export let Leaf = (ctx, leaf, [x, y]) => {
-  CheckBounds(x, y)
-
-  return _Get(leaf, x, y)
-}
-
 export let Branch = ({Recur: Get}) =>
-  (ctx, branch, loc) => {
-    let {index, location} = QuadrantLocation(loc, branch.size)
+  function BranchGet(size, branch, loc) {
+    let {index, location} = QuadrantLocation(loc, size)
+    return Get(size/2, branch[index], location)
+  }
 
-    return Get(ctx, branch[index], location)
+export let Leaf = () =>
+  function LeafGet(_size, leaf, [x, y]) {
+    CheckBounds(x, y)
+    return _Get(leaf, x, y)
   }

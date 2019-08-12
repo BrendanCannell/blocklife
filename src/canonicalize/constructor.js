@@ -1,20 +1,20 @@
 import * as U from "../util"
 
-export default function MakeMakeCanonicalizingConstructor(typeName, c8izable) {
-  let Canonicalize = MakeCanonicalize(typeName, c8izable)
+export default function MakeMakeCanonicalizingConstructor(typeName, c8izable, Canon) {
+  let Canonicalize = MakeCanonicalize(typeName, c8izable, Canon)
   return function MakeCanonicalizingConstructor(Constructor) {
-    let CanonicalizingConstructor = (ctx, ...args) => {
-      return Canonicalize(ctx, Constructor(ctx, ...args))}
+    let CanonicalizingConstructor = (...args) =>
+      Canonicalize(Constructor(...args))
     if (Constructor.name)
       U.setName(CanonicalizingConstructor, 'Canonicalizing' + Constructor.name)
     return CanonicalizingConstructor
   }
 }
 
-function MakeCanonicalize(typeName, {Hash, Equal, SetDerived}) {
+function MakeCanonicalize(typeName, {Hash, Equal, SetDerived}, Canon) {
   return U.setName(Canonicalize, "Canonicalize" + typeName)
-  function Canonicalize(ctx, newObj) {
-    let {GetCanon, SetCanon, Free} = ctx[typeName]
+  function Canonicalize(newObj) {
+    let {GetCanon, SetCanon, Free} = Canon()
       , hash = Hash(newObj)
       , bin = hash
     do {
@@ -24,7 +24,7 @@ function MakeCanonicalize(typeName, {Hash, Equal, SetDerived}) {
     } while (collision)
     if (!canonical) {
       SetCanon(bin, newObj)
-      return SetDerived(ctx, newObj, hash)
+      return SetDerived(newObj, hash)
     } else {
       Free(newObj)
       return canonical

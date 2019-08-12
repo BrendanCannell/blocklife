@@ -1,7 +1,12 @@
 import CanonicalizeConstructor from "./constructor"
+import {Canon} from "../context"
 import * as U from "../util"
+
 let Canonicalizable = {EqualNeighborhood, HashNeighborhood, SetDerivedNeighborhood}
-export default CanonicalizeConstructor('Neighborhood', U.stripRight('Neighborhood')(Canonicalizable))
+export default CanonicalizeConstructor(
+    'Neighborhood',
+    U.stripRight('Neighborhood')(Canonicalizable),
+    Canon.Neighborhood)
 
 function EqualNeighborhood(a, b) {
   if (a.node !== b.node) return false
@@ -11,14 +16,14 @@ function EqualNeighborhood(a, b) {
   return true
 }
 
-import {IsLeaf} from "../leaf"
+import * as L from "../leaf"
 import {of, ofArray, ofHashedArray} from "../fnv-hash"
-function HashNeighborhood({node, edges, corners}) {
-  let edgeHash = IsLeaf(node) ? ofArray(edges) : ofHashedArray(edges)
+function HashNeighborhood({size, node, edges, corners}) {
+  let edgeHash = size === L.SIZE ? ofArray(edges) : ofHashedArray(edges)
   return of(node.hash, edgeHash, ofArray(corners))
 } 
 
-function SetDerivedNeighborhood(ctx, neighborhood) {
+function SetDerivedNeighborhood(neighborhood) {
   neighborhood.next = null
   return neighborhood
 }

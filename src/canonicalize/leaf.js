@@ -1,7 +1,11 @@
 import CanonicalizeConstructor from "./constructor"
+import {Canon} from "../context"
 import * as U from "../util"
 let Canonicalizable = {EqualLeaf, HashLeaf, SetDerivedLeaf}
-export default CanonicalizeConstructor('Leaf', U.stripRight('Leaf')(Canonicalizable))
+export default CanonicalizeConstructor(
+    'Leaf',
+    U.stripRight('Leaf')(Canonicalizable),
+    Canon.Leaf)
 
 function EqualLeaf(a, b) {
   for (let i = 0; i < SIZE; i++)
@@ -17,7 +21,7 @@ function HashLeaf(leaf) {
 
 import * as D from "../direction"
 import {SIZE, WEST_EDGE, EAST_EDGE} from "../leaf"
-function SetDerivedLeaf(ctx, leaf, hash) {
+function SetDerivedLeaf(leaf, hash) {
   leaf.hash = hash
 
   var west = 0

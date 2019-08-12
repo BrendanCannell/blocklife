@@ -1,54 +1,41 @@
 import {default as G} from "./grid"
+import {SIZE} from "./leaf"
 import * as D from "./direction"
 import * as U from "./util"
 import {Branch as NewBranch} from "./canonicalize/new"
 
 let ceilPow2 = n => Math.pow(2, Math.ceil(Math.log2(n)))
-let floor32 = n => Math.floor(n * 32) / 32
-let ceil32 = n => Math.ceil(n * 32) / 32
+let floorSIZE = n => Math.floor(n * SIZE) / SIZE
+let ceilSIZE = n => Math.ceil(n * SIZE) / SIZE
 
-export function FromLiving(ctx, locations) {
+export function FromLiving(locations) {
   let max = locations.reduce((max, [x, y]) =>
-        Math.max(max, Math.abs(x), Math.abs(y)), 0)
-    , offset = Math.max(ceilPow2(max), 32)
+        Math.max(max, Math.abs(x), Math.abs(y)), 1)
+    , offset = Math.max(ceilPow2(max), SIZE)
+    , size = offset * 2
     , grid = G.FromLiving(
-        ctx,
-        offset * 2,
+        size,
         locations.map(([x, y]) => [x + offset, y + offset]),
       )
-    , empty = G.FromLiving(ctx, offset * 2, [])
+    , empty = G.FromLiving(size, [])
 
-  return {grid, empty}
+  return {size, grid, empty}
 }
 
-export function* Living(ctx, root) {
-  let offset = root.grid.size / 2
+export function* Living(root) {
+  let offset = root.size / 2
 
-  for (let [x, y] of G.Living(ctx, root.grid))
+  for (let [x, y] of G.Living(root.size, root.grid))
     yield [x - offset, y - offset]
 }
 
-let check = (branch, size = branch.size) => {
-  for (let i = 0; i < 4; i++){
-    if (branch[i].size !== size / 2) {
-      console.log({i, branch})
-      throw Error("Size mismatch")
-    }
-    if (branch[i].size > 32) check(branch[i], size/2)
-  }
-
-  return branch
-}
-
-export function Next(ctx, root) {
-  check(root.grid)
-  let g = root.grid
-    , e = root.empty
-    , center = G.Next(ctx, g, e, e, e, e, e, e, e, e)
-    , N =      G.Next(ctx, e, e, g, e, e, e, e, e, e)
-    , S =      G.Next(ctx, e, g, e, e, e, e, e, e, e)
-    , W =      G.Next(ctx, e, e, e, e, g, e, e, e, e)
-    , E =      G.Next(ctx, e, e, e, g, e, e, e, e, e)
+export function Next(root) {
+  let {size, grid: g, empty: e} = root
+    , R = G.Next(size, g, e, e, e, e, e, e, e, e)
+    , N = G.Next(size, e, e, g, e, e, e, e, e, e)
+    , S = G.Next(size, e, g, e, e, e, e, e, e, e)
+    , W = G.Next(size, e, e, e, e, g, e, e, e, e)
+    , E = G.Next(size, e, e, e, g, e, e, e, e, e)
     , mustGrow = (
            N.population !== 0
         || S.population !== 0
@@ -57,39 +44,60 @@ export function Next(ctx, root) {
       )
 
   let newRoot = mustGrow
-    ? Grow(ctx, center, N, S, W, E)
+    ? Grow(size, R, N, S, W, E)
     : {
-      grid: center,
-      empty: G.FromLiving(ctx, center.size, [])
+      size,
+      grid: R,
+      empty: G.FromLiving(size, []),
     }
-
-  check(newRoot.grid)
 
   return newRoot
 }
 
-function Grow(ctx, center, north, south, west, east) {
-  let e = G.FromLiving(ctx, center.size / 2, [])
-    , grid = NewBranch(ctx,
-        NewBranch(ctx,
+export function Get(root, location) {
+  let r = root
+    , loc = GridLoc(r.size, location)
+  return loc && G.Get(r.size, r.grid, loc)
+}
+
+export function Set(root, pairs) {
+  let {size, empty, grid} = root
+    , withGridLocs = pairs.map(([loc, state]) => [GridLoc(size, loc), state])
+    , mustGrow = withGridLocs.some(([loc]) => !loc)
+  if (mustGrow) {
+    let grown = Grow(size, grid, empty, empty, empty, empty)
+    return Set(grown, pairs)
+  }
+  else return {
+    size, empty,
+    grid: G.Set(size, grid, withGridLocs)
+  }
+}
+
+function Grow(oldSize, center, north, south, west, east) {
+  let emptyGrandchild = G.FromLiving(oldSize / 2, [])
+    , e = emptyGrandchild
+    , size = oldSize * 2
+    , grid = NewBranch(
+        NewBranch(
           e,
           north[D.SW],
           west[D.NE],
           center[D.NW]
         ),
-        NewBranch(ctx,
+        NewBranch(
           north[D.SE],
           e,
           center[D.NE],
           east[D.NW]
         ),
-        NewBranch(ctx,
+        NewBranch(
           west[D.SE],
           center[D.SW],
           e,
           south[D.NW]
         ),
-        NewBranch(ctx,
+        NewBranch(
           center[D.SE],
           east[D.SW],
           south[D.NE],
@@ -97,20 +105,21 @@ function Grow(ctx, center, north, south, west, east) {
         )
       )
   return {
+    size,
     grid,
-    empty: G.FromLiving(ctx, center.size * 2, [])
+    empty: G.FromLiving(size, [])
   }
 }
 
-function LocationFromCorner(root, [x, y]) {
-  let d = root.size / 2
+function GridLoc(size, [x, y]) {
+  let d = size / 2
     , inRoot = -d <= x && x < d && -d <= y && y < d
 
-  return inRoot && [x + d, y + d]
+  return inRoot ? [x + d, y + d] : null
 }
 
-function LocationFromOrigin (root, [x, y]) {
-  let d = root.size / 2
+function RootLoc (size, [x, y]) {
+  let d = size / 2
 
   return [x - d, y - d]
 }
