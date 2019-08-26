@@ -33,5 +33,11 @@
   "dependencies": {
     "@brendancannell/dysc": "0.2.0",
     "rho-contracts": "0.0.5"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
