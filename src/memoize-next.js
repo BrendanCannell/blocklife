@@ -1,11 +1,12 @@
-import {Neighborhood} from "./canonicalize/new"
+import CanonicalNeighborhoodConstructor from "./neighborhood/canonical-constructor"
+import NN from "./neighborhood/new"
 
-let MemoizeNext = Next =>
-  function MemoizedNext(...args) {
-    let neighborhood = Neighborhood(...args)
-    if (!neighborhood.next)
-      neighborhood.next = Next(...args)
-    return neighborhood.next
+let MemoizeNext = ({LEAF_SIZE, Malloc}) => function MemoizeNext(Next) {
+  let CNC = CanonicalNeighborhoodConstructor({LEAF_SIZE, Next})
+    , NewNeighborhood = CNC(NN({Malloc}))
+  
+  return function MemoizedNext(...args) {
+    return NewNeighborhood(...args).next
   }
-
+}
 export default MemoizeNext

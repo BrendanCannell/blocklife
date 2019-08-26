@@ -1,11 +1,10 @@
-import * as C from 'rho-contracts'
+import C  from 'rho-contracts'
 
 export let equalLocations =
   C.pred(
     ([[x0, y0], [x1, y1]]) => x0 === x1 && y0 === y1
   )
   .rename('equal locations')
-
 
 export let location =
   C.pred(

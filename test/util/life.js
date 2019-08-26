@@ -1,5 +1,4 @@
 // Naive reference implementation of Life
-
 import {AscXGroupedByDescY as order} from "./location"
 
 export let neighborhood = ([x, y]) => [
@@ -10,27 +9,21 @@ export let neighborhood = ([x, y]) => [
 
 export let next = liveCells => {
   let isAlive = cell => liveCells.find(c => 0 === order(c, cell))
-
-  var neighbors =
+    , neighbors =
         liveCells
         .flatMap(neighborhood)
         .sort(order)
-
-  var next = []
-
+    , next = []
   while (neighbors.length) {
     let cell = neighbors.shift()
     var count = 1
-
     while (neighbors[0] && 0 === order(cell, neighbors[0])) {
       neighbors.shift()
       count++
     }
-
     if (count === 3 || (count === 2 && isAlive(cell)))
       next.push(cell)
   }
-
   return next.sort(order)
 }
 

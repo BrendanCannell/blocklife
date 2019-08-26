@@ -1,24 +1,26 @@
 {
-  "name": "blocklife",
+  "name": "lowlife",
   "version": "0.1.0",
   "description": "An implementation of Conway's Game of Life",
-  "main": "index.js",
+  "main": "dist/lowlife.cjs.js",
+  "module": "dist/lowlife.esm.js",
+  "browser": "dist/lowlife.umd.js",
   "scripts": {
-    "test": "npm run build && ./node_modules/.bin/mocha test/root.js test/hash.js test/util/glider.js --no-diff --require @babel/register",
-    "test:inspect": "npm run build && ./node_modules/.bin/mocha --inspect-brk test/branch.js test/hash.js --no-diff --require @babel/register",
-    "build": "./node_modules/.bin/babel --presets @babel/preset-env src -d lib",
-    "prepublish": "npm run build"
+    "test": "npx luna test/memoized-canonical-tree.js test/infinite-grid.js test/life.js --node",
+    "build": "./node_modules/.bin/rollup -c",
+    "dev": "./node_modules/.bin/rollup -c -w",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BrendanCannell/blocklife.git"
+    "url": "git+https://github.com/BrendanCannell/lowlife.git"
   },
   "author": "Brendan Cannell <brendan@cannells.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/BrendanCannell/blocklife/issues"
+    "url": "https://github.com/BrendanCannell/lowlife/issues"
   },
-  "homepage": "https://github.com/BrendanCannell/blocklife#readme",
+  "homepage": "https://github.com/BrendanCannell/lowlife#readme",
   "devDependencies": {
     "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.0",
@@ -28,7 +30,12 @@
     "@babel/register": "^7.4.4",
     "babel-plugin-source-map-support": "^2.1.1",
     "chai": "^4.2.0",
+    "luna-testing": "^1.3.2",
     "mocha": "^6.1.4",
+    "rollup": "^1.19.4",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.1",
     "seedrandom": "^3.0.1",
     "source-map-support": "^0.5.12"
   },

@@ -21,6 +21,16 @@ export function ofArray(array) {
   return hash
 }
 
+export function ofArrayBy(array, Hash) {
+  let len = array.length
+  let hash = FNV_OFFSET_BASIS
+
+  for (let i = 0; i < len; i++)
+    hash = reducer(hash, Hash(array[i]) | 0)
+
+  return hash
+}
+
 export function ofHashedArray(array) {
   let len = array.length
   let hash = FNV_OFFSET_BASIS

@@ -1,9 +1,13 @@
-import {inspect as UtilInspect} from 'util'
+// import {inspect as UtilInspect} from 'util'
 
 export let apply = arg => fn => fn(arg)
 
 export let asPairs = fn => obj =>
   Object.fromEntries(fn(Object.entries(obj)))
+
+export let ceilPow2 = n => Math.pow(2, Math.ceil(Math.log2(n)), 2)
+
+export let ceilBy = (d, n) => Math.ceil(n / d) * d
 
 export function checkIterable(x) {
   if (!isIterable(x)) throw TypeError("Expected iterable: " + x)
@@ -32,9 +36,17 @@ export let filter = fn => obj => {
   return asPairs(pairs => pairs.filter(filterPair))(obj)
 }
 
+export let floorBy = (d, n) => Math.floor(n / d) * d
+
+export let forEach = xf => function forEach(xs) {
+  for (let [key, value] of entries(xs))
+    xf(value, key, xs)
+  return xs
+}
+
 export let go = (data, ...ops) => pipe(ops)(data)
 
-export let inspect = x => (log(UtilInspect(x, false, null, true)), x)
+// export let inspect = x => (log(UtilInspect(x, false, null, true)), x)
 
 export let isIterable = x => x && typeof x[Symbol.iterator] === 'function'
 
@@ -47,14 +59,14 @@ export let liftOpts = afterOpts => fn => beforeOpts =>
 
 export let log = x => console.log(x) || x
 
-export let map = xf => function mapper(xs) {
+export let map = xf => function map(xs) {
   var result = empty(xs)
   for (let [key, value] of entries(xs))
     result[key] = xf(value, key, xs)
   return result
 }
 
-export let mapKeys = xf => function mapper(xs) {
+export let mapKeys = xf => function mapKeys(xs) {
   var result = empty(xs)
   for (let [key, value] of entries(xs))
     result[xf(key, value, xs)] = value
