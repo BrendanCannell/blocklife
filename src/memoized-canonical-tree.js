@@ -75,6 +75,7 @@ export default {
   ...named,
   BlurBuffer: BB.New,
   AddToBlur: BB.Add,
+  ClearBlur: BB.Clear,
   DrawBlur: BB.Draw,
   LEAF_SIZE
 }

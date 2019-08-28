@@ -1,7 +1,6 @@
 import * as G from "./infinite-grid"
 import Store from "./canonical-store"
 import letStore from "./let-store"
-import BlurBuffer from "./blur-buffer"
 
 export default function Life(locations = []) {
   return FromLiving(locations)
@@ -26,6 +25,7 @@ Life.prototype.values = function() {
 Life.BlurBuffer = function(opts) {
   let blurBuffer = G.BlurBuffer({maxSteps: 1, ...opts})
     , add = life => (G.AddToBlur(life.grid, blurBuffer), wrapped)
+    , clear = () => (G.ClearBlur(blurBuffer), wrapped)
     , draw = ({colors, imageData}) => {
       let {data, width, height} = imageData
         , i32colors = colors.map(rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0])
@@ -38,7 +38,7 @@ Life.BlurBuffer = function(opts) {
       G.DrawBlur(i32colors, blurBuffer, drawData)
       return imageData
     }
-    , wrapped = {add, draw}
+    , wrapped = {add, draw, clear}
   return wrapped
 }
 

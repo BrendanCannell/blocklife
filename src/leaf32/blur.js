@@ -34,14 +34,16 @@ let Add = () => function LeafAdd(_size, leaf, leafOffset, blurData) {
 function Get(leafOffset, dx, dy, blurData) {
   let {buffer, leafDerived} = blurData
     , {divisionCount, divisionToCellMask} = leafDerived
-    , rowOffset = leafOffset + dy * divisionCount
-    , columnOffset = 31 - dx
-    , divIndex = columnOffset % divisionCount
-    , divOffset = rowOffset + divIndex
-    , div = buffer[divOffset]
-    , divColumnOffset = U.floorBy(divisionCount, columnOffset)
+    , rowOffset = leafOffset + dy * divisionCount | 0
+    , columnOffset = 31 - dx | 0
+    , divIndex = columnOffset % divisionCount | 0
+    , divOffset = rowOffset + divIndex | 0
+    , div = buffer[divOffset] | 0
+    , divColumnOffset = floor(columnOffset / divisionCount) * divisionCount | 0
     , blur = divisionToCellMask & (div >>> divColumnOffset)
   return blur
 }
+
+let {floor} = Math
 
 export default {Add, New: LeafNew, Get}

@@ -5,7 +5,15 @@ export default ({Branch, Leaf, LEAF_SIZE}) => {
   let Add = Fix(LEAF_SIZE)({Branch: Branch.Add, Leaf: Leaf.Add})
     , {New: LeafNew, Get: LeafGet} = Leaf
 
-  return {Add, New, Draw}
+  return {Add, Clear, New, Draw}
+
+  function Clear(blurBuffer) {
+    let {buffer} = blurBuffer
+      , len = buffer.length
+    for (let i = 0; i < len; i++)
+      buffer[i] = 0
+    return blurBuffer
+  }
   
   function Draw(colors, blurData, drawData) {
     let {offsetPerRow, sizeCoefficient, viewportWidth, xPadding, yPadding, bx0, by0} = blurData.rootDerived
@@ -15,18 +23,25 @@ export default ({Branch, Leaf, LEAF_SIZE}) => {
       , iHeight = dd.height | 0
       , scale = iWidth / viewportWidth
     bx0 |= 0; by0 |= 0;
+    let dxs = new Int32Array(iWidth)
+      , xLeafOffsets = new Int32Array(iWidth)
+    for (let ix = 0; ix < iWidth; ix++) {
+      let gx = ix / scale + xPadding | 0 // Truncation required
+        , lx = floor(gx / LEAF_SIZE) * LEAF_SIZE | 0
+      dxs[ix] = gx - lx
+      xLeafOffsets[ix] = (lx - bx0) * sizeCoefficient
+    }
     for (let iy = 0; iy < iHeight; iy++) {
       let gy = iy / scale + yPadding | 0 // Truncation required
-        , ly = U.floorBy(LEAF_SIZE, gy) | 0
+        , ly = floor(gy / LEAF_SIZE) * LEAF_SIZE | 0
         , dy = gy - ly
+        , yLeafOffset = (ly - by0) * offsetPerRow
         , iRowOffset = iy * iWidth | 0
       for (let ix = 0; ix < iWidth; ix++) {
-        let gx = ix / scale + xPadding | 0 // Truncation required
-          , lx = U.floorBy(LEAF_SIZE, gx) | 0
-          , dx = gx - lx
-          , leafOffset = (lx - bx0) * sizeCoefficient + (ly - by0) * offsetPerRow
-          , blur = LeafGet(leafOffset, dx, dy, blurData)
-        image[iRowOffset + ix] = colors[blur]
+        let leafOffset = xLeafOffsets[ix] + yLeafOffset
+          , dx = dxs[ix]
+          , blur = LeafGet(leafOffset, dx, dy, blurData) | 0
+        image[iRowOffset + ix] = colors[blur] | 0
       }
     }
     return drawData
@@ -62,3 +77,5 @@ export default ({Branch, Leaf, LEAF_SIZE}) => {
     return blurBuffer
   }
 }
+
+let {floor} = Math

@@ -16,6 +16,7 @@ export function AddToBlur(infiniteGrid, blurData) {
 }
 export let BlurBuffer = T.BlurBuffer
 export let DrawBlur = T.DrawBlur
+export let ClearBlur = T.ClearBlur
 
 export function FromLiving(locations) {
   let max = locations.reduce((max, [x, y]) =>
