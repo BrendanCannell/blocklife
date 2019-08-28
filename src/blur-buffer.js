@@ -55,7 +55,6 @@ export default ({Branch, Leaf, LEAF_SIZE}) => {
       , by1 = U.ceilBy(LEAF_SIZE, vy1)
       , width  = bx1 - bx0
       , height = by1 - by0
-      , size = Math.max(width, height)
       , {sizeCoefficient, leafDerived} = LeafNew({maxSteps})
       , rootDerived = {
           sizeCoefficient,
@@ -66,7 +65,7 @@ export default ({Branch, Leaf, LEAF_SIZE}) => {
           bx0,
           by0
         }
-      , buffer = new Int32Array(size * size * sizeCoefficient / LEAF_SIZE)
+      , buffer = new Int32Array(width * height * sizeCoefficient / LEAF_SIZE)
       , blurBuffer = {
           viewport,
           maxSteps,
