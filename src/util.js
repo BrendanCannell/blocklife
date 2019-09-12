@@ -1,4 +1,4 @@
-// import {inspect as UtilInspect} from 'util'
+export {isEqual} from 'lodash-es'
 
 export let apply = arg => fn => fn(arg)
 

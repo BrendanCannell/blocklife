@@ -6,6 +6,22 @@ export default function Life(locations = []) {
   return FromLiving(locations)
 }
 
+Life.prototype.add = function(location) {
+  let copy = FromLiving([...this.values()])
+  copy.grid = letStore(copy.store, () => G.Set(copy.grid, [[location, true]]))
+  return copy
+}
+
+Life.prototype.has = function(location) {
+  return G.Get(this.grid, location)
+}
+
+Life.prototype.remove = function(location) {
+  let copy = FromLiving([...this.values()])
+  copy.grid = letStore(copy.store, () => G.Set(copy.grid, [[location, false]]))
+  return copy
+}
+
 Life.prototype.step = function({count = 1} = {}) {
   var store1 = Store()
     , store2 = Store()
@@ -24,22 +40,29 @@ Life.prototype.values = function() {
 
 Life.BlurBuffer = function(opts) {
   let blurBuffer = G.BlurBuffer({maxSteps: 1, ...opts})
-    , add = life => (G.AddToBlur(life.grid, blurBuffer), wrapped)
-    , clear = () => (G.ClearBlur(blurBuffer), wrapped)
-    , draw = ({colors, imageData}) => {
-      let {data, width, height} = imageData
-        , i32colors = colors.map(rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0])
-        , i32data = new Int32Array(data.buffer)
-        , drawData = {
+    , wrappedBlurBuffer = {add, draw, clear, get: () => blurBuffer}
+  return wrappedBlurBuffer
+
+  function add(life, viewport) {
+    G.AddToBlur(life.grid, blurBuffer, viewport)
+    return wrappedBlurBuffer
+  }
+  function clear() {
+    G.ClearBlur(blurBuffer)
+    return wrappedBlurBuffer
+  }
+  function draw(imageData, colors, viewport) {
+    let {data, width, height} = imageData
+      , i32colors = colors.map(rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0])
+      , i32data = new Int32Array(data.buffer)
+      , drawData = {
           data: i32data,
           width,
           height
         }
-      G.DrawBlur(i32colors, blurBuffer, drawData)
-      return imageData
-    }
-    , wrapped = {add, draw, clear}
-  return wrapped
+    G.DrawBlur(i32colors, blurBuffer, drawData, viewport)
+    return imageData
+  }
 }
 
 function MakeLife(grid, store) {

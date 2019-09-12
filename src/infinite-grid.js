@@ -8,11 +8,23 @@ let NewBranch = CanonicalBranchConstructor(NoncanonicalNewBranch)
 
 export const LEAF_SIZE = T.LEAF_SIZE
 
-export function AddToBlur(infiniteGrid, blurData) {
+export function AddToBlur(infiniteGrid, blurData, viewport) {
   let {root, size} = infiniteGrid
-    , {offsetPerRow, sizeCoefficient, xPadding, yPadding} = blurData.rootDerived
-    , rootOffset = xPadding * sizeCoefficient + yPadding * offsetPerRow
-  return T.AddToBlur(size, root, rootOffset, blurData)
+    , {sizeCoefficient} = blurData.branchDerived
+    , {v0: [viewportX0, viewportY0], v1: [viewportX1, viewportY1]} = viewport
+    , paddedWidth  = U.ceilBy(LEAF_SIZE, viewportX1 - viewportX0) + LEAF_SIZE
+    , paddedHeight = U.ceilBy(LEAF_SIZE, viewportY1 - viewportY0) + LEAF_SIZE
+    , paddedX0 = U.floorBy(LEAF_SIZE, viewportX0)
+    , paddedY0 = U.floorBy(LEAF_SIZE, viewportY0)
+    , paddedX1 = paddedX0 + paddedWidth
+    , paddedY1 = paddedY0 + paddedHeight
+    , paddedViewport = {
+        v0: [paddedX0, paddedY0],
+        v1: [paddedX1, paddedY1]
+      }
+    , offsetPerRow = paddedWidth * sizeCoefficient / LEAF_SIZE
+  // console.log({size, viewport, paddedViewport, offsetPerRow})
+  return T.AddToBlur(size, root, -size/2, -size/2, paddedViewport, offsetPerRow, blurData)
 }
 export let BlurBuffer = T.BlurBuffer
 export let DrawBlur = T.DrawBlur
@@ -21,7 +33,7 @@ export let ClearBlur = T.ClearBlur
 export function FromLiving(locations) {
   let max = locations.reduce((max, [x, y]) =>
         Math.max(max, Math.abs(x), Math.abs(y)), 1)
-    , ceilPow2 = Math.pow(2, Math.ceil(Math.log2(max)))
+    , ceilPow2 = Math.pow(2, Math.ceil(Math.log2(max + 1)))
     , offset = Math.max(ceilPow2, T.LEAF_SIZE)
     , size = offset * 2
     , root = T.FromLiving(
@@ -56,7 +68,7 @@ export function Next(infiniteGrid) {
       : {
         size,
         root: C,
-        empty: T.FromLiving(size, []),
+        empty: T.Copy(size, e)//T.FromLiving(size, []),
       }
   return newRoot
 }

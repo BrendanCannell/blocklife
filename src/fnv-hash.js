@@ -15,8 +15,15 @@ export function ofArray(array) {
   let len = array.length
   let hash = FNV_OFFSET_BASIS
 
-  for (let i = 0; i < len; i++)
-    hash = reducer(hash, array[i] | 0)
+  for (let i = 0; i < len; i++) {
+    let n = array[i] | 0
+    for (let j = 0; j < 4; j++) {
+      hash *= FNV_PRIME
+      hash |= 0
+      hash ^= n & 0xFF
+      n >>>= 8
+    }
+  }
 
   return hash
 }
@@ -48,7 +55,7 @@ export function reducer(hash, n) {
   for (let i = 0; i < 4; i++) {
     hash *= FNV_PRIME
     hash |= 0
-    hash ^= (n & 0xFF)
+    hash ^= n & 0xFF
     n >>>= 8
   }
 

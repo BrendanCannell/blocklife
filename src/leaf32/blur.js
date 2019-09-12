@@ -19,9 +19,11 @@ function LeafNew({maxSteps}) {
   }
 }
   
-let Add = () => function LeafAdd(_size, leaf, leafOffset, blurData) {
+let Add = () => function LeafAdd(_size, leaf, lx, ly, paddedViewport, offsetPerRow, blurData) {
   let {buffer, leafDerived} = blurData
     , {divisionCount, rowToDivisionMask} = leafDerived
+    , [x0, y0] = paddedViewport.v0
+    , leafOffset = (lx - x0) * divisionCount + offsetPerRow * (ly - y0) | 0
   divisionCount |= 0; leafOffset |= 0; rowToDivisionMask |= 0
   for (let y = 0; y < SIZE; y++) {
     let rowOffset = leafOffset + y * divisionCount | 0

@@ -12,12 +12,12 @@ export default [
     },
     plugins: [
       resolve(),
-      terser({
-        compress: {
-          unsafe: true,
-          pure_getters: true
-        }
-      })
+      // terser({
+      //   compress: {
+      //     unsafe: true,
+      //     pure_getters: true
+      //   }
+      // })
     ]
 	},
 	{
