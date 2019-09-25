@@ -6,22 +6,20 @@ export default CanonicalizeConstructor(
 )
 
 import * as U from "../util"
-import {ofArray, ofHashedArray} from "../fnv-hash"
+import {of} from "../fnv-hash"
+import {HASH} from "./constants"
+import EdgeEqual from "./equal"
 function Canonicalizable() {
   let Canonicalizable = {EdgeEqual, EdgeHash, EdgeSetDerived}
   return U.stripLeft('Edge')(Canonicalizable)
 
-  function EdgeEqual(a, b) {
-    return a[0] === b[0] && a[1] === b[1]
-  }
-
   function EdgeHash(e) {
     let isLeaf = typeof e[0] === 'number'
-    return isLeaf ? ofArray(e) : ofHashedArray(e)
+    return isLeaf ? of(e[0], e[1]) : of(e[0][HASH], e[1][HASH])
   }
 
   function EdgeSetDerived(edge, hash) {
-    edge.hash = hash
+    edge[HASH] = hash
     return edge
   }
 }

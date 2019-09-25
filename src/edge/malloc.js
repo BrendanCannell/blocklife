@@ -1,3 +1,3 @@
 export default function EdgeMalloc() {
-  return [null, null]
+  return [null, null, null]
 }

@@ -9,23 +9,23 @@ import * as U from "../util"
 import {of} from "../fnv-hash"
 import ECC from "../edge/canonical-constructor"
 import EN from "../edge/new"
-
-function Canonicalizable({NewEdge, Child: {Hash, Population, Edge, Corner}} = defaults()) {
+import BranchEqual from "./equal"
+function Canonicalizable({NewEdge, Child} = defaults()) {
   let Canonicalizable = {BranchEqual, BranchHash, BranchSetDerived}
+    , {
+        Hash: ChildHash,
+        Population: ChildPop,
+        Edge: ChildEdge,
+        Corner: ChildCorner
+      } = Child
   return U.stripLeft('Branch')(Canonicalizable)
-
-  function BranchEqual(a, b) {
-    for (let i = 0; i < 4; i++)
-      if (a[i] !== b[i]) return false
-    return true
-  }
 
   function BranchHash(branch) {
     return of(
-      Hash(branch[0]),
-      Hash(branch[1]),
-      Hash(branch[2]),
-      Hash(branch[3])
+      ChildHash(branch[0]),
+      ChildHash(branch[1]),
+      ChildHash(branch[2]),
+      ChildHash(branch[3])
     )
   }
 
@@ -33,12 +33,12 @@ function Canonicalizable({NewEdge, Child: {Hash, Population, Edge, Corner}} = de
     branch.hash = hash
     var population = 0
     for (let i = 0; i < 4; i++) {
-      population += Population(branch[i])
+      population += ChildPop(branch[i])
       let [sq0, sq1] = EDGE_QUADRANTS[i]
-        , e0 = Edge(branch[sq0], i)
-        , e1 = Edge(branch[sq1], i)
+        , e0 = ChildEdge(branch[sq0], i)
+        , e1 = ChildEdge(branch[sq1], i)
       branch.edges[i] = NewEdge(e0, e1)
-      branch.corners[i] = Corner(branch[i], i)
+      branch.corners[i] = ChildCorner(branch[i], i)
     }
     branch.population = population
     return branch

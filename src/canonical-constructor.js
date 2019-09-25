@@ -19,11 +19,15 @@ function MakeCanonicalize({Hash, Equal, SetDerived}, Canon) {
     do {
       var canonical = GetCanon(bin)
       var collision = canonical && !Equal(newObj, canonical)
-      if (collision) (bin++, console.log("COLLISION"))
+      if (collision) {
+        bin++
+        console.log("COLLISION")
+      }
     } while (collision)
     if (!canonical) {
+      SetDerived(newObj, hash)
       SetCanon(bin, newObj)
-      return SetDerived(newObj, hash)
+      return newObj
     } else {
       Free(newObj)
       return canonical

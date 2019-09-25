@@ -1,6 +1,7 @@
 let Substore = ({Malloc, Copy}) => function New(pool = [], inUse = 0) {
   let store = {
     Malloc: () => {
+      // if (inUse === pool.length) console.log({type: Malloc.name.match(/(.*)Malloc/)[1], inUse})
       if (inUse === pool.length) pool.push(Malloc())
       return pool[inUse++]
     },

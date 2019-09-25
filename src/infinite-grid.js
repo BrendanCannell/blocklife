@@ -23,12 +23,19 @@ export function AddToBlur(infiniteGrid, blurData, viewport) {
         v1: [paddedX1, paddedY1]
       }
     , offsetPerRow = paddedWidth * sizeCoefficient / LEAF_SIZE
-  // console.log({size, viewport, paddedViewport, offsetPerRow})
   return T.AddToBlur(size, root, -size/2, -size/2, paddedViewport, offsetPerRow, blurData)
 }
 export let BlurBuffer = T.BlurBuffer
 export let DrawBlur = T.DrawBlur
 export let ClearBlur = T.ClearBlur
+
+export function Copy({size, root, empty}) {
+  return {
+    size,
+    root: T.Copy(size, root),
+    empty: T.Copy(size, empty)
+  }
+}
 
 export function FromLiving(locations) {
   let max = locations.reduce((max, [x, y]) =>
@@ -68,7 +75,7 @@ export function Next(infiniteGrid) {
       : {
         size,
         root: C,
-        empty: T.Copy(size, e)//T.FromLiving(size, []),
+        empty: T.Copy(size, e),
       }
   return newRoot
 }
@@ -76,6 +83,11 @@ export function Next(infiniteGrid) {
 export function Get(grid, location) {
   let loc = GridLoc(grid.size, location)
   return loc && T.Get(grid.size, grid.root, loc)
+}
+
+export function Render(grid, renderCfg) {
+  renderCfg.imageData.data.fill(renderCfg.colors.dead)
+  T.Render(grid.size, grid.root, -grid.size/2, -grid.size/2, renderCfg)
 }
 
 export function Set(grid, pairs) {

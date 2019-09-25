@@ -13,3 +13,5 @@ export let Malloc = {
   Leaf: Var('Malloc/Leaf'),
   Neighborhood: Var('Malloc/Neighborhood')
 }
+
+export let CopyMemoTable = Var('CopyMemoTable')

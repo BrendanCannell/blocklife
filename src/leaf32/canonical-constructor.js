@@ -9,15 +9,10 @@ import * as U from "../util"
 import * as D from "../direction"
 import {SIZE, WEST_EDGE, EAST_EDGE} from "./constants"
 import {ofArray} from "../fnv-hash"
+import LeafEqual from "./equal"
 function Canonicalizable() {
   let Canonicalizable = {LeafEqual, LeafHash: ofArray, LeafSetDerived}
   return U.stripLeft('Leaf')(Canonicalizable)
-  
-  function LeafEqual(a, b) {
-    for (let i = 0; i < SIZE; i++)
-      if (a[i] !== b[i]) return false
-    return true
-  }
   
   function LeafSetDerived(leaf, hash) {
     leaf.hash = hash

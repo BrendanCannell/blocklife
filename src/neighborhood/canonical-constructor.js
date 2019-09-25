@@ -6,7 +6,8 @@ export default ({LEAF_SIZE, Next}) => CanonicalConstructor(
 )
 
 import * as U from "../util"
-import {of, ofArray, ofHashedArray} from "../fnv-hash"
+import {of, ofArray} from "../fnv-hash"
+import {HASH} from "../edge/constants"
 function Canonicalizable({LEAF_SIZE, Next}) {
   let Canonicalizable = {NeighborhoodEqual, NeighborhoodHash, NeighborhoodSetDerived}
   return U.stripLeft('Neighborhood')(Canonicalizable)
@@ -20,13 +21,24 @@ function Canonicalizable({LEAF_SIZE, Next}) {
   }
 
   function NeighborhoodHash({size, node, edges, corners}) {
-    let edgeHash = size === LEAF_SIZE ? ofArray(edges) : ofHashedArray(edges)
+    let edgeHash = size === LEAF_SIZE
+      ? ofArray(edges)
+      : of(edges[0][HASH], edges[1][HASH], edges[2][HASH], edges[3][HASH]) // TODO abstraction
     return of(node.hash, edgeHash, ofArray(corners))
   } 
 
-  function NeighborhoodSetDerived(neighborhood) {
+  function NeighborhoodSetDerived(neighborhood, hash) {
     let {size, node, neighbors} = neighborhood
+    neighborhood.hash = hash
     neighborhood.next = Next(size, node, ...neighbors)
     return neighborhood
   }
 }
+// (
+// {
+//   node: null,
+//   neighbors: [null, null, null, null, null, null, null, null],
+//   edges: [null, null, null, null],
+//   corners: [0, 0, 0, 0],
+//   next: null
+// })

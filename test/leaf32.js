@@ -1,6 +1,6 @@
 import * as U from "../src/util"
 import Store from "../src/canonical-store"
-import letStore from "../src/let-store"
+import LetStore from "../src/let-store"
 import Malloc from "../src/leaf32/malloc"
 import CanonicalConstructor from "../src/leaf32/canonical-constructor"
 import FromLiving from "../src/leaf32/from-living"
@@ -21,14 +21,14 @@ let L = {
 
 export let testNE = t => {
   process.debug = true
-  let {e, left} = letStore(Store(), () => {
+  let {e, left} = LetStore(Store(), () => {
         let d = 0
         return {
           e:    L.FromLiving(null, []),
           left: L.FromLiving(null, [[30,3+d],[31,3+d],[29,4+d],[31,4+d],[31,5+d]])
         }
       })
-    , {leftNext, rightNext} = letStore(Store(), () => {
+    , {leftNext, rightNext} = LetStore(Store(), () => {
         return {
           leftNext:  L.Next(null, left, e, e, e, e, e, e, e, e),
           rightNext: L.Next(null, e, e, e, left, e, e, e, e, e)

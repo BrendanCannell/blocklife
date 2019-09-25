@@ -1,7 +1,7 @@
 import {AscXGroupedByDescY as order} from "./util/location"
 import Glider from "./util/glider"
 import Store from "../src/canonical-store"
-import letStore from "../src/let-store"
+import LetStore from "../src/let-store"
 import T from "../src/memoized-canonical-tree"
 
 let testDirection = direction => t => {
@@ -10,7 +10,7 @@ let testDirection = direction => t => {
     , stepCount = size * 2
     , glider = Glider[direction](-stepCount/2, offset)
     , stores = [Store(), Store()]
-    , {grid, e} = letStore(stores[1], () => {
+    , {grid, e} = LetStore(stores[1], () => {
         let empty = T.FromLiving(size, [])
         return {
           grid: T.Set(size, empty, glider.map(loc => [loc, true])),
@@ -21,7 +21,7 @@ let testDirection = direction => t => {
   for (let i = 0; i < stepCount; i++) {
     let store = stores[i % 2]
     store.Clear()
-    letStore(store, () => {
+    LetStore(store, () => {
       grid = T.Next(size, grid, e, e, e, e, e, e, e, e),
       e = T.FromLiving(size, [])
     })

@@ -138,10 +138,10 @@ let isArray = Array.isArray
 
 let empty = obj => isArray(obj) ? [] : {}
 
-let collectionMethod = key => x =>
+let collectionMethod = name => x =>
   isArray(x)
-    ? [...x[key]()]
-    : Object[key](x)
+    ? [...x[name]()]
+    : Object[name](x)
 let entries = collectionMethod('entries')
 let keys    = collectionMethod('keys')
 let values  = collectionMethod('values')

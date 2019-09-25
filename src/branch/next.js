@@ -41,10 +41,6 @@ export default ({Malloc, Recur: Next}) =>
         , S =  4
         , W = -1
         , E =  1
-
-      if (q === D.SE) {
-        if (sg[_ + W] !== b [D.SW]) throw Error("SW")
-      }
       
       raw[q] = Next(
         childSize,

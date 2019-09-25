@@ -2,15 +2,31 @@ import * as U from "./util"
 import Fix from "./fix-tree"
 import {SIZE as LEAF_SIZE} from "./leaf32/constants"
 
-import {Malloc as MallocCtx} from "./context"
+import {
+  Malloc as MallocCtx,
+  CopyMemoTable as CopyMemoTableCtx
+} from "./context"
 let Malloc = U.map(MC => (...args) => MC()(...args))(MallocCtx)
 
-import MN from "./memoize-next"
-// let MemoizeNext = fn => fn
-let MemoizeNext = MN({LEAF_SIZE, Malloc: Malloc.Neighborhood})
-
 import CanonicalBranchConstructor from "./branch/canonical-constructor"
+import CanonicalEdgeConstructor from "./edge/canonical-constructor"
 import CanonicalLeafConstructor from "./leaf32/canonical-constructor"
+import MemoizeNext from "./memoize-next"
+import MemoizeCopy from "./memoize-copy"
+
+let Lift = xf => fn => (...args) => xf(fn(...args))
+  , LiftNamed = namedArgs => fn => (args = {}) => fn({...namedArgs, ...args})
+
+import ECopy from "./edge/copy"
+
+let EdgeMemoizeCopy = MemoizeCopy({
+      GetOriginal: edge => edge,
+      MemoTable: CopyMemoTableCtx
+    })
+  , EdgeCopy = EdgeMemoizeCopy(CanonicalEdgeConstructor(ECopy({
+      Malloc: Malloc.Edge,
+      Recur: edge => EdgeCopy(edge)
+    })))
 
 import BCopy from "./branch/copy"
 import BFromLiving from "./branch/from-living"
@@ -19,7 +35,7 @@ import BLiving from "./branch/living"
 import BNext from "./branch/next"
 import BSet from "./branch/set"
 let Branch = U.stripLeft('B')({
-  BCopy,
+  BCopy: LiftNamed({EdgeCopy})(BCopy),
   BFromLiving,
   BGet,
   BLiving,
@@ -42,25 +58,84 @@ let Leaf = U.stripLeft('L')({
   LSet,
 })
 
-let Lift = xf => fn => (...args) => xf(fn(...args))
-  , LiftNamed = namedArg => fn => (args = {}) => fn({...namedArg, ...args})
+let MN = MemoizeNext({LEAF_SIZE, Malloc: Malloc.Neighborhood})
   , Configure = (C8ize, Malloc, {Copy, FromLiving, Get, Living, Next, Set}) => {
       let MallocAndC8ize = fn => Lift(C8ize)(LiftNamed({Malloc})(fn))
+        , MC = MemoizeCopy({GetOriginal: (_size, obj) => obj, MemoTable: CopyMemoTableCtx}) 
       return {
         Get,
         Living,
-        Copy:       MallocAndC8ize(Copy),
+        Copy: Lift(MC)(MallocAndC8ize(Copy)),
         FromLiving: MallocAndC8ize(FromLiving),
-        Set:        MallocAndC8ize(Set),
-        Next: Lift(MemoizeNext)(MallocAndC8ize(Next))
+        Set: MallocAndC8ize(Set),
+        Next: Lift(MN)(MallocAndC8ize(Next))
       }
     }
   , configured = {
-    Leaf:   Configure(CanonicalLeafConstructor,   Malloc.Leaf,   Leaf),
-    Branch: Configure(CanonicalBranchConstructor, Malloc.Branch, Branch)
-  }
+      Leaf:   Configure(CanonicalLeafConstructor,   Malloc.Leaf,   Leaf),
+      Branch: Configure(CanonicalBranchConstructor, Malloc.Branch, Branch)
+    }
   , fixed = U.map(Fix(LEAF_SIZE))(U.zip(configured))
-  , named = U.map(U.setName)(fixed)
+  , fixedCopy = fixed.Copy
+  , memoTable = new Map()
+  , getSet = {
+      GetMemo: key => memoTable.get(key),
+      SetMemo: (key, value) => memoTable.set(key, value)
+    }
+  , withCopyMemoTable = {
+      ...fixed,
+      Copy: (...args) => {
+        memoTable.clear()
+        return CopyMemoTableCtx.let(getSet, () => fixedCopy(...args))
+      },
+    }
+  , named = U.map(U.setName)(withCopyMemoTable)
+
+import BRender from "./branch/render"
+import LRender from "./leaf32/render"
+let Render = (() => {
+  let LeafCase = LRender()
+    , BranchCase = BRender({Recur: NodeSwitch})
+  return NodeSwitch
+
+  function NodeSwitch(size, node, left, top, renderCfg) {
+    let v = renderCfg.viewport
+      , right  = left + size
+      , bottom = top  + size
+      , overlapsViewport =
+             left   < v.right
+          && right  > v.left
+          && top    < v.bottom
+          && bottom > v.top
+    if (!overlapsViewport || node.population === 0) return
+    let Case = size === LEAF_SIZE ? LeafCase : BranchCase
+    return Case(size, node, left, top, renderCfg)
+  }
+
+  function FillDead(left, right, top, bottom, renderCfg) {
+    let {viewport: v, colors, scale, imageData: {data, width}} = renderCfg
+      , dead = colors.dead | 0
+      , leftBounded   = max(left,   v.left)
+      , rightBounded  = min(right,  v.right)
+      , topBounded    = max(top,    v.top)
+      , bottomBounded = min(bottom, v.bottom)
+      , leftPixel   = floor((leftBounded   - v.left) * scale) | 0
+      , rightPixel  = floor((rightBounded  - v.left) * scale) | 0
+      , topPixel    = floor((topBounded    - v.top)  * scale) | 0
+      , bottomPixel = floor((bottomBounded - v.top)  * scale) | 0
+    for (let y = topPixel; y < bottomPixel; y++) {
+      let base = y * width | 0
+      for (let x = leftPixel; x < rightPixel; x++)
+        data[base + x] = dead
+    }
+  }
+})()
+let floor = x =>
+      x >= 0
+        ? x | 0
+        : (x | 0) - 1
+  , max = (x, y) => x > y ? x : y
+  , min = (x, y) => x > y ? y : x
 
 import BBlur from "./branch/blur"
 import LBlur from "./leaf32/blur"
@@ -73,6 +148,7 @@ let BB = BlurBuffer({
 
 export default {
   ...named,
+  Render,
   BlurBuffer: BB.New,
   AddToBlur: BB.Add,
   ClearBlur: BB.Clear,

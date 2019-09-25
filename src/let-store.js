@@ -2,7 +2,7 @@ import * as U from "./util"
 
 import {Canon, Malloc} from "./context"
 
-export default function letStore(store, fn) {
+export default function LetStore(store, fn) {
   let BranchMalloc       = store.Branch.Malloc
   let EdgeMalloc         = store.Edge.Malloc
   let LeafMalloc         = store.Leaf.Malloc
