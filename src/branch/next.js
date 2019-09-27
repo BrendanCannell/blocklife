@@ -31,8 +31,9 @@ export default ({Malloc, Recur: Next}) =>
           SE[D.NW]
         ]
       , sg = subgrids
-      , childSize = size / 2
+      , childSize = branch.size / 2
 
+    raw.size = branch.size
     for (let q = 0; q < 4; q++) {
       let xOffset = 1 + (q & 1)      // [1, 2, 1, 2]
         , yOffset = 2 + (q & 2) << 1 // [4, 4, 8, 8]

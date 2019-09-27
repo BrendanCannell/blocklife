@@ -109,25 +109,30 @@ function Grow(oldSize, center, north, south, west, east) {
     , e = emptyGrandchild
     , size = oldSize * 2
     , root = NewBranch(
+        size,
         NewBranch(
+          oldSize,
           e,
           north[D.SW],
           west[D.NE],
           center[D.NW]
         ),
         NewBranch(
+          oldSize,
           north[D.SE],
           e,
           center[D.NE],
           east[D.NW]
         ),
         NewBranch(
+          oldSize,
           west[D.SE],
           center[D.SW],
           e,
           south[D.NW]
         ),
         NewBranch(
+          oldSize,
           center[D.SE],
           east[D.SW],
           south[D.NE],

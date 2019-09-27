@@ -4,6 +4,7 @@ export default ({Malloc, Recur: FromLiving}) =>
   function BranchFromLiving(size, locations) {
     let raw = Malloc()
       , partitions = [[], [], [], []]
+    raw.size = size
     for (let loc of locations) {
       let {index, location} = QuadrantLocation(loc, size)
       partitions[index].push(location)

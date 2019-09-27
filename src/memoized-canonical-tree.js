@@ -1,5 +1,5 @@
 import * as U from "./util"
-import Fix from "./fix-tree"
+import FixBySize from "./fix-by-size"
 import {SIZE as LEAF_SIZE} from "./leaf32/constants"
 
 import {
@@ -75,7 +75,7 @@ let MN = MemoizeNext({LEAF_SIZE, Malloc: Malloc.Neighborhood})
       Leaf:   Configure(CanonicalLeafConstructor,   Malloc.Leaf,   Leaf),
       Branch: Configure(CanonicalBranchConstructor, Malloc.Branch, Branch)
     }
-  , fixed = U.map(Fix(LEAF_SIZE))(U.zip(configured))
+  , fixed = U.map(FixBySize(LEAF_SIZE))(U.zip(configured))
   , fixedCopy = fixed.Copy
   , memoTable = new Map()
   , getSet = {
@@ -111,47 +111,10 @@ let Render = (() => {
     let Case = size === LEAF_SIZE ? LeafCase : BranchCase
     return Case(size, node, left, top, renderCfg)
   }
-
-  function FillDead(left, right, top, bottom, renderCfg) {
-    let {viewport: v, colors, scale, imageData: {data, width}} = renderCfg
-      , dead = colors.dead | 0
-      , leftBounded   = max(left,   v.left)
-      , rightBounded  = min(right,  v.right)
-      , topBounded    = max(top,    v.top)
-      , bottomBounded = min(bottom, v.bottom)
-      , leftPixel   = floor((leftBounded   - v.left) * scale) | 0
-      , rightPixel  = floor((rightBounded  - v.left) * scale) | 0
-      , topPixel    = floor((topBounded    - v.top)  * scale) | 0
-      , bottomPixel = floor((bottomBounded - v.top)  * scale) | 0
-    for (let y = topPixel; y < bottomPixel; y++) {
-      let base = y * width | 0
-      for (let x = leftPixel; x < rightPixel; x++)
-        data[base + x] = dead
-    }
-  }
 })()
-let floor = x =>
-      x >= 0
-        ? x | 0
-        : (x | 0) - 1
-  , max = (x, y) => x > y ? x : y
-  , min = (x, y) => x > y ? y : x
-
-import BBlur from "./branch/blur"
-import LBlur from "./leaf32/blur"
-import BlurBuffer from "./blur-buffer"
-let BB = BlurBuffer({
-  Branch: BBlur,
-  Leaf: LBlur,
-  LEAF_SIZE
-})
 
 export default {
   ...named,
   Render,
-  BlurBuffer: BB.New,
-  AddToBlur: BB.Add,
-  ClearBlur: BB.Clear,
-  DrawBlur: BB.Draw,
   LEAF_SIZE
 }

@@ -2,7 +2,8 @@ export default ({Malloc, Recur: Copy, EdgeCopy}) => {
   return function BranchCopy(size, branch) {
     let raw = Malloc()
     for (let i = 0; i < 4; i++)
-      raw[i] = Copy(size/2, branch[i])
+      raw[i] = Copy(branch.size/2, branch[i])
+    raw.size = branch.size
     raw.hash = branch.hash
     CopyDerived(branch, raw)
     return raw

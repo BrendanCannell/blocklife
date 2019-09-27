@@ -63,20 +63,8 @@ Life.prototype.render = function(renderCfg) {
       }
     , scaleX = imageDataAsU8Clamped.width / viewport.width
     , scaleY = imageDataAsU8Clamped.height / viewport.height
-  // if (scaleX !== scaleY)
-  //   throw Error("Expected equal aspect ratios for imageData and viewport: " + JSON.stringify({
-  //     imageData: {
-  //       width: imageData.width,
-  //       height: imageData.height,
-  //       ratio: imageData.width / imageData.height
-  //     },
-  //     viewport: {
-  //       width: viewport.width,
-  //       height: viewport.height,
-  //       ratio: viewport.width / viewport.height
-  //     }
-  //   }))
-  G.Render(this.grid, {imageData, colors, viewport, scale: scaleX})  
+    , scale = Math.min(scaleX, scaleY)
+  G.Render(this.grid, {imageData, colors, viewport, scale})  
   return imageDataAsU8Clamped
 }
 let RGBAToInt32 = rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0]
@@ -122,12 +110,12 @@ function StepManyMutate(life, count) {
   return life
 }
 
-Life.prototype.step = function({count = 1, canMutate} = {}) {
+Life.prototype.step = function({count = 1, canFree} = {}) {
   let Step =
-      (count === 1 && !canMutate) ? StepOncePure
-    : (count === 1 &&  canMutate) ? StepOnceMutate
-    : (count >   1 && !canMutate) ? StepManyPure
-    : (count >   1 &&  canMutate) ? StepManyMutate
+      (count === 1 && !canFree) ? StepOncePure
+    : (count === 1 &&  canFree) ? StepOnceMutate
+    : (count >   1 && !canFree) ? StepManyPure
+    : (count >   1 &&  canFree) ? StepManyMutate
     : undefined
   return Step(this, count)
 }

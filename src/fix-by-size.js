@@ -1,5 +1,5 @@
 // Tying the knot for a single grid function
-export default LEAF_SIZE => function Fix({Leaf, Branch}) {
+export default LEAF_SIZE => function FixBySize({Leaf, Branch}) {
   let LeafCase = Leaf()
     , BranchCase = Branch({Recur: GridSwitch})
   function GridSwitch(size, ...rest) {
