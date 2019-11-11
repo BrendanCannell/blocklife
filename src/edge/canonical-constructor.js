@@ -1,6 +1,6 @@
 import CanonicalizeConstructor from "../canonical-constructor"
 import {Canon} from "../context"
-export default CanonicalizeConstructor(
+export default () => CanonicalizeConstructor(
   Canonicalizable(),
   Canon.Edge
 )

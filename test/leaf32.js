@@ -1,5 +1,5 @@
 import * as U from "../src/util"
-import Store from "../src/canonical-store"
+import Store from "../src/canonical-store32"
 import LetStore from "../src/let-store"
 import Malloc from "../src/leaf32/malloc"
 import CanonicalConstructor from "../src/leaf32/canonical-constructor"

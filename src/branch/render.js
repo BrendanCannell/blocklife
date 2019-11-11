@@ -1,13 +1,13 @@
 import QUADRANTS from "./quadrants"
 
 let Render = ({Recur}) =>
-  function BranchRender(size, branch, branchLeftGrid, branchTopGrid, renderCfg) {
-    let qSize = branch.size / 2
+  function BranchRender(branch, branchLeftGrid, branchTopGrid, renderCfg) {
+    let size = branch.size
     for (let {index, offset: [dx, dy]} of QUADRANTS) {
       let quadrant = branch[index]
-        , quadrantLeftGrid   = branchLeftGrid   + dx * branch.size
-        , quadrantTopGrid    = branchTopGrid    + dy * branch.size
-      Recur(qSize, quadrant, quadrantLeftGrid, quadrantTopGrid, renderCfg)
+        , quadrantLeftGrid   = branchLeftGrid   + dx * size
+        , quadrantTopGrid    = branchTopGrid    + dy * size
+      Recur(quadrant, quadrantLeftGrid, quadrantTopGrid, renderCfg)
     }
   }
 

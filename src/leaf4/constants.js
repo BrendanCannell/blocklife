@@ -1,0 +1,10 @@
+export const SIZE = 4
+export const ODD = 0x33333333
+export const NORTH_EDGE = 0xFF000000
+export const SOUTH_EDGE = 0x000000FF
+export const WEST_EDGE  = 0xC0C0C0C0
+export const EAST_EDGE  = 0x03030303
+export const NORTHWEST_CORNER = 0xC0000000
+export const NORTHEAST_CORNER = 0x03000000
+export const SOUTHWEST_CORNER = 0x000000C0
+export const SOUTHEAST_CORNER = 0x00000003

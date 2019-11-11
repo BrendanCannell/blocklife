@@ -1,5 +1,5 @@
 import * as G from "./infinite-grid"
-import Store from "./canonical-store"
+import Store from "./canonical-store32"
 import LetStore from "./let-store"
 
 export default function Life(locations = []) {
@@ -46,6 +46,14 @@ Life.prototype.has = function(location) {
   return Get(this, location)
 }
 
+Life.prototype.hash = function() {
+  return G.GetHash(this.grid)
+}
+
+Life.prototype.population = function() {
+  return G.GetPopulation(this.grid)
+}
+
 Life.prototype.remove = function(location) {
   return Set(this, location, false)
 }
@@ -69,14 +77,14 @@ Life.prototype.render = function(renderCfg) {
 }
 let RGBAToInt32 = rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0]
 
-// count = 1, unique = false
+// count = 1, canFree = false
 function StepOncePure(life) {
   let nextStore = life.recycledStore ? life.recycledStore.Clear() : Store()
     , nextGrid = LetStore(nextStore, () => G.Next(life.grid))
   life.recycledStore = null // Moved to new owner (if present)
   return Make(nextGrid, nextStore)
 }
-// count  = 1, unique = true
+// count = 1, canFree = true
 function StepOnceMutate(life) {
   let nextStore = life.recycledStore ? life.recycledStore.Clear() : Store()
     , nextGrid = LetStore(nextStore, () => G.Next(life.grid))
@@ -85,7 +93,7 @@ function StepOnceMutate(life) {
   life.store = nextStore
   return life
 }
-
+// count > 1, canFree = false
 function StepManyPure(life, count) {
   var off = life.recycledStore || Store()
     , on = Store()
@@ -111,6 +119,7 @@ function StepManyMutate(life, count) {
 }
 
 Life.prototype.step = function({count = 1, canFree} = {}) {
+  if (count === 0) return this
   let Step =
       (count === 1 && !canFree) ? StepOncePure
     : (count === 1 &&  canFree) ? StepOnceMutate
@@ -168,31 +177,4 @@ Life.prototype.__ensureOwner = function(ownerID) {
   }
   // make own copy
   else return copy(this, ownerID)
-}
-
-Life.BlurBuffer = function(opts) {
-  let blurBuffer = G.BlurBuffer(opts)
-    , wrappedBlurBuffer = {...opts, add, draw, clear, get: () => blurBuffer}
-  return wrappedBlurBuffer
-
-  function add(life, viewport) {
-    G.AddToBlur(life.grid, blurBuffer, viewport)
-    return wrappedBlurBuffer
-  }
-  function clear() {
-    G.ClearBlur(blurBuffer)
-    return wrappedBlurBuffer
-  }
-  function draw(imageData, colors, viewport) {
-    let {data, width, height} = imageData
-      , i32colors = colors.map(rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0])
-      , i32data = new Int32Array(data.buffer)
-      , drawData = {
-          data: i32data,
-          width,
-          height
-        }
-    G.DrawBlur(i32colors, blurBuffer, drawData, viewport)
-    return imageData
-  }
 }

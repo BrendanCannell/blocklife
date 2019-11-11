@@ -1,8 +1,9 @@
 import QUADRANTS from "./quadrants"
 
 export default ({Recur: Living}) =>
-  function* BranchLiving(size, branch) {
+  function* BranchLiving(branch) {
+    let size = branch.size
     for (let {index, offset: [dx, dy]} of QUADRANTS)
-      for (let [x, y] of Living(size/2, branch[index]))
+      for (let [x, y] of Living(branch[index]))
         yield [x + dx * size, y + dy * size]
   }

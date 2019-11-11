@@ -1,39 +1,14 @@
 import * as U from "./util"
-import T from "./memoized-canonical-tree"
+import T from "./memoized-canonical-tree32"
 import * as D from "./direction"
 
-import CanonicalBranchConstructor from "./branch/canonical-constructor"
-import NoncanonicalNewBranch from "./branch/new"
-let NewBranch = CanonicalBranchConstructor(NoncanonicalNewBranch)
-
 export const LEAF_SIZE = T.LEAF_SIZE
-
-export function AddToBlur(infiniteGrid, blurData, viewport) {
-  let {root, size} = infiniteGrid
-    , {sizeCoefficient} = blurData.branchDerived
-    , {v0: [viewportX0, viewportY0], v1: [viewportX1, viewportY1]} = viewport
-    , paddedWidth  = U.ceilBy(LEAF_SIZE, viewportX1 - viewportX0) + LEAF_SIZE
-    , paddedHeight = U.ceilBy(LEAF_SIZE, viewportY1 - viewportY0) + LEAF_SIZE
-    , paddedX0 = U.floorBy(LEAF_SIZE, viewportX0)
-    , paddedY0 = U.floorBy(LEAF_SIZE, viewportY0)
-    , paddedX1 = paddedX0 + paddedWidth
-    , paddedY1 = paddedY0 + paddedHeight
-    , paddedViewport = {
-        v0: [paddedX0, paddedY0],
-        v1: [paddedX1, paddedY1]
-      }
-    , offsetPerRow = paddedWidth * sizeCoefficient / LEAF_SIZE
-  return T.AddToBlur(size, root, -size/2, -size/2, paddedViewport, offsetPerRow, blurData)
-}
-export let BlurBuffer = T.BlurBuffer
-export let DrawBlur = T.DrawBlur
-export let ClearBlur = T.ClearBlur
 
 export function Copy({size, root, empty}) {
   return {
     size,
-    root: T.Copy(size, root),
-    empty: T.Copy(size, empty)
+    root: T.Copy(root),
+    empty: T.Copy(empty)
   }
 }
 
@@ -53,17 +28,17 @@ export function FromLiving(locations) {
 
 export function* Living(infiniteGrid) {
   let offset = infiniteGrid.size / 2
-  for (let [x, y] of T.Living(infiniteGrid.size, infiniteGrid.root))
+  for (let [x, y] of T.Living(infiniteGrid.root))
     yield [x - offset, y - offset]
 }
 
 export function Next(infiniteGrid) {
   let {size, root: r, empty: e} = infiniteGrid
-    , C = T.Next(size, r, e, e, e, e, e, e, e, e)
-    , N = T.Next(size, e, e, r, e, e, e, e, e, e)
-    , S = T.Next(size, e, r, e, e, e, e, e, e, e)
-    , W = T.Next(size, e, e, e, e, r, e, e, e, e)
-    , E = T.Next(size, e, e, e, r, e, e, e, e, e)
+    , C = T.Next(r, e, e, e, e, e, e, e, e)
+    , N = T.Next(e, e, r, e, e, e, e, e, e)
+    , S = T.Next(e, r, e, e, e, e, e, e, e)
+    , W = T.Next(e, e, e, e, r, e, e, e, e)
+    , E = T.Next(e, e, e, r, e, e, e, e, e)
     , mustGrow = (
            N.population !== 0
         || S.population !== 0
@@ -75,19 +50,27 @@ export function Next(infiniteGrid) {
       : {
         size,
         root: C,
-        empty: T.Copy(size, e),
+        empty: T.Copy(e),
       }
   return newRoot
 }
 
 export function Get(grid, location) {
   let loc = GridLoc(grid.size, location)
-  return loc && T.Get(grid.size, grid.root, loc)
+  return loc && T.Get(grid.root, loc)
+}
+
+export function GetHash(grid) {
+  return T.GetHash(grid.root)
+}
+
+export function GetPopulation(grid) {
+  return T.GetPopulation(grid.root)
 }
 
 export function Render(grid, renderCfg) {
   renderCfg.imageData.data.fill(renderCfg.colors.dead)
-  T.Render(grid.size, grid.root, -grid.size/2, -grid.size/2, renderCfg)
+  T.Render(grid.root, -grid.size/2, -grid.size/2, renderCfg)
 }
 
 export function Set(grid, pairs) {
@@ -100,7 +83,7 @@ export function Set(grid, pairs) {
   }
   else return {
     size, empty,
-    root: T.Set(size, root, withGridLocs)
+    root: T.Set(root, withGridLocs)
   }
 }
 
@@ -108,30 +91,30 @@ function Grow(oldSize, center, north, south, west, east) {
   let emptyGrandchild = T.FromLiving(oldSize / 2, [])
     , e = emptyGrandchild
     , size = oldSize * 2
-    , root = NewBranch(
+    , root = T.NewBranch(
         size,
-        NewBranch(
+        T.NewBranch(
           oldSize,
           e,
           north[D.SW],
           west[D.NE],
           center[D.NW]
         ),
-        NewBranch(
+        T.NewBranch(
           oldSize,
           north[D.SE],
           e,
           center[D.NE],
           east[D.NW]
         ),
-        NewBranch(
+        T.NewBranch(
           oldSize,
           west[D.SE],
           center[D.SW],
           e,
           south[D.NW]
         ),
-        NewBranch(
+        T.NewBranch(
           oldSize,
           center[D.SE],
           east[D.SW],

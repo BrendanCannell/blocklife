@@ -4,7 +4,7 @@ import * as Loc from "./util/location"
 import Glider from "./util/glider"
 
 import Grid from "../src/grid"
-import Store from "../src/canonical-store"
+import Store from "../src/canonical-store32"
 
 let G = Grid
 let store = Store()

@@ -1,6 +1,6 @@
 import {AscXGroupedByDescY as order} from "./util/location"
 import Glider from "./util/glider"
-import Store from "../src/canonical-store"
+import Store from "../src/canonical-store32"
 import LetStore from "../src/let-store"
 import * as G from "../src/infinite-grid"
 

@@ -2,7 +2,6 @@ import * as D from "../direction"
 
 export default ({Malloc, Recur: Next}) =>
   function BranchNext(
-    size,
     branch,
     N,  S,  W,  E,
     NW, NE, SW, SE
@@ -31,7 +30,6 @@ export default ({Malloc, Recur: Next}) =>
           SE[D.NW]
         ]
       , sg = subgrids
-      , childSize = branch.size / 2
 
     raw.size = branch.size
     for (let q = 0; q < 4; q++) {
@@ -43,8 +41,8 @@ export default ({Malloc, Recur: Next}) =>
         , W = -1
         , E =  1
       
+      if (!sg[_]) debugger
       raw[q] = Next(
-        childSize,
         sg[_],
         sg[_ + N],
         sg[_ + S],

@@ -1,5 +1,7 @@
 import SetOne from "./set-one"
 
-export function Set(leaf, pairs) {
-  return locations.reduce((leaf, [loc, state]) => SetOne(leaf, loc, state), leaf)
+export default function Set(leaf, pairs) {
+  for (var [loc, state] of pairs)
+    leaf = SetOne(leaf, loc, state)
+  return leaf
 }
