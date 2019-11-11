@@ -3,7 +3,6 @@ import {SIZE, WEST_EDGE} from "./constants"
 
 export default ({Malloc}) =>
   function LeafNext(
-    _size,
     leaf,
     N, S, W, E,
     NW, NE, SW, SE

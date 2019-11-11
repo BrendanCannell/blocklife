@@ -1,44 +1,66 @@
 import CanonicalConstructor from "../canonical-constructor"
 import {Canon} from "../context"
-export default CanonicalConstructor(
-  Canonicalizable(),
+export default opts => CanonicalConstructor(
+  Canonicalizable(opts),
   Canon.Branch
 )
 
 import * as U from "../util"
-import {of} from "../fnv-hash"
-import ECC from "../edge/canonical-constructor"
-import EN from "../edge/new"
+import {ofArray} from "../fnv-hash"
 import BranchEqual from "./equal"
-function Canonicalizable({NewEdge, Child} = defaults()) {
+import BranchGetCorner from "./get-corner"
+import BranchGetEdge from "./get-edge"
+import BranchGetHash from "./get-hash"
+import BranchGetPopulation from "./get-population"
+function Canonicalizable({EdgeNew, LEAF_SIZE, LeafGetHash, LeafGetPopulation, LeafGetEdge, LeafGetCorner}) {
   let Canonicalizable = {BranchEqual, BranchHash, BranchSetDerived}
-    , {
-        Hash: ChildHash,
-        Population: ChildPop,
-        Edge: ChildEdge,
-        Corner: ChildCorner
-      } = Child
   return U.stripLeft('Branch')(Canonicalizable)
 
+  function HasLeafChildren(branch) {
+    return branch.size === LEAF_SIZE * 2
+  }
+
   function BranchHash(branch) {
-    return of(
-      ChildHash(branch[0]),
-      ChildHash(branch[1]),
-      ChildHash(branch[2]),
-      ChildHash(branch[3])
-    )
+    if (HasLeafChildren(branch))
+      for (let i = 0; i < 4; i++)
+        subhashes[i] = LeafGetHash(branch[i])
+    else
+      for (let i = 0; i < 4; i++)
+        subhashes[i] = BranchGetHash(branch[i])
+    return ofArray(subhashes)
   }
 
   function BranchSetDerived(branch, hash) {
+    return HasLeafChildren(branch)
+      ? BranchWithLeafChildrenSetDerived(branch, hash)
+      : BranchWithBranchChildrenSetDerived(branch, hash)
+  }
+
+  function BranchWithLeafChildrenSetDerived(branch, hash) {
     branch.hash = hash
     var population = 0
     for (let i = 0; i < 4; i++) {
-      population += ChildPop(branch[i])
       let [sq0, sq1] = EDGE_QUADRANTS[i]
-        , e0 = ChildEdge(branch[sq0], i)
-        , e1 = ChildEdge(branch[sq1], i)
-      branch.edges[i] = NewEdge(e0, e1)
-      branch.corners[i] = ChildCorner(branch[i], i)
+        , e0 = LeafGetEdge(branch[sq0], i)
+        , e1 = LeafGetEdge(branch[sq1], i)
+      branch.edges[i] = EdgeNew(e0, e1)
+      branch.corners[i] = LeafGetCorner(branch[i], i)
+      population += LeafGetPopulation(branch[i])
+    }
+    branch.population = population
+    return branch
+  }
+
+  function BranchWithBranchChildrenSetDerived(branch, hash) {
+    branch.hash = hash
+    var population = 0
+    for (let i = 0; i < 4; i++) {
+      let [sq0, sq1] = EDGE_QUADRANTS[i]
+        , e0 = BranchGetEdge(branch[sq0], i)
+        , e1 = BranchGetEdge(branch[sq1], i)
+      branch.edges[i] = EdgeNew(e0, e1)
+      branch.corners[i] = BranchGetCorner(branch[i], i)
+      population += BranchGetPopulation(branch[i])
     }
     branch.population = population
     return branch
@@ -53,14 +75,4 @@ const EDGE_QUADRANTS = [
   [D.NE, D.SE]
 ]
 
-function defaults() {
-  return {
-    NewEdge: ECC(EN),
-    Child: {
-      Hash: (c) => c.hash,
-      Population: (c) => c.population,
-      Edge: (c, direction) => c.edges[direction],
-      Corner: (c, direction) => c.corners[direction]
-    }
-  }
-}
+const subhashes = [0,0,0,0]

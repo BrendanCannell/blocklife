@@ -28,12 +28,12 @@ export function ofArray(array) {
   return hash
 }
 
-export function ofArrayBy(array, Hash) {
+export function ofArrayBy(array, GetHash) {
   let len = array.length
   let hash = FNV_OFFSET_BASIS
 
   for (let i = 0; i < len; i++)
-    hash = reducer(hash, Hash(array[i]) | 0)
+    hash = reducer(hash, GetHash(array[i]) | 0)
 
   return hash
 }

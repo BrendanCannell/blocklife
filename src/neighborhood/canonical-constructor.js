@@ -1,14 +1,14 @@
 import CanonicalConstructor from "../canonical-constructor"
 import {Canon} from "../context"
-export default ({LEAF_SIZE, Next}) => CanonicalConstructor(
-  Canonicalizable({LEAF_SIZE, Next}),
+const subhashes = [0,0,0,0,0,0,0,0,0]
+export default (opts) => CanonicalConstructor(
+  Canonicalizable(opts),
   Canon.Neighborhood
 )
 
 import * as U from "../util"
 import {of, ofArray} from "../fnv-hash"
-import {HASH} from "../edge/constants"
-function Canonicalizable({LEAF_SIZE, Next}) {
+function Canonicalizable({LEAF_SIZE, NodeGetHash, EdgeGetHash, Next}) {
   let Canonicalizable = {NeighborhoodEqual, NeighborhoodHash, NeighborhoodSetDerived}
   return U.stripLeft('Neighborhood')(Canonicalizable)
 
@@ -20,25 +20,19 @@ function Canonicalizable({LEAF_SIZE, Next}) {
     return true
   }
 
-  function NeighborhoodHash({size, node, edges, corners}) {
-    let edgeHash = size === LEAF_SIZE
-      ? ofArray(edges)
-      : of(edges[0][HASH], edges[1][HASH], edges[2][HASH], edges[3][HASH]) // TODO abstraction
-    return of(node.hash, edgeHash, ofArray(corners))
-  } 
+  function NeighborhoodHash({node, edges, corners}) {
+    subhashes[0] = NodeGetHash(node)
+    for (let i = 0; i < 4; i++) {
+      subhashes[i+1] = EdgeGetHash(edges[i])
+      subhashes[i+5] = corners[i]
+    }
+    return ofArray(subhashes)
+  }
 
   function NeighborhoodSetDerived(neighborhood, hash) {
-    let {size, node, neighbors} = neighborhood
+    let {node, neighbors} = neighborhood
     neighborhood.hash = hash
-    neighborhood.next = Next(size, node, ...neighbors)
+    neighborhood.next = Next(node, ...neighbors)
     return neighborhood
   }
 }
-// (
-// {
-//   node: null,
-//   neighbors: [null, null, null, null, null, null, null, null],
-//   edges: [null, null, null, null],
-//   corners: [0, 0, 0, 0],
-//   next: null
-// })

@@ -1,12 +1,12 @@
 {
   "name": "lowlife",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "An implementation of Conway's Game of Life",
   "main": "dist/lowlife.cjs.js",
   "module": "dist/lowlife.esm.js",
   "browser": "dist/lowlife.umd.js",
   "scripts": {
-    "test": "npx luna test/memoized-canonical-tree.js test/infinite-grid.js test/life.js --node",
+    "test": "npx luna test/memoized-canonical-tree32.js test/infinite-grid.js test/life.js --node",
     "build": "./node_modules/.bin/rollup -c",
     "dev": "./node_modules/.bin/rollup -c -w",
     "prepublishOnly": "npm run build"

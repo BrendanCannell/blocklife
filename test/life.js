@@ -13,13 +13,13 @@ export function testMarshalGlider(t) {
 export function testMoveGlider(t) {
   for (let direction in Glider) {
     let count = 256
-      , glider = Glider[direction](-count/2, [0,-5])
+      , glider = Glider[direction](-count/4, [0,-5])
       , life = Life(glider)
     for (let i = 0; i < count; i++) {
-      life = life.step({canMutate: true})
+      life = life.step({canFree: true})
     }
     let actual = [...life.values()].sort(order)
-      , expected = Glider[direction](count/2, [0,-5])
+      , expected = Glider[direction](3*count/4, [0,-5])
     t.assert(actual == expected, 'move a glider across the origin')
   }
 }
@@ -27,9 +27,9 @@ export function testMoveGlider(t) {
 export function testMoveGliderMultistep(t) {
   for (let direction in Glider) {
     let count = 256
-      , glider = Glider[direction](-count/2, [0,-5])
-      , actual = [...Life(glider).step({count, canMutate: true}).values()].sort(order)
-      , expected = Glider[direction](count/2, [0,-5])
+      , glider = Glider[direction](-count/4, [0,-5])
+      , actual = [...Life(glider).step({count, canFree: true}).values()].sort(order)
+      , expected = Glider[direction](3*count/4, [0,-5])
     t.assert(actual == expected, 'move a glider across the origin')
   }
 }

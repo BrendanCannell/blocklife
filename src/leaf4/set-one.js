@@ -1,6 +1,6 @@
-import Mask from "./mask"
+import Mask from "./location-mask"
 
-export function SetOne(leaf, [x, y], state) {
+export default function SetOne(leaf, [x, y], state) {
   let mask = Mask(x, y)
 
   return state

@@ -1,6 +1,6 @@
 import CanonicalConstructor from "../canonical-constructor"
 import {Canon} from "../context"
-export default CanonicalConstructor(
+export default () => CanonicalConstructor(
   Canonicalizable(),
   Canon.Leaf
 )

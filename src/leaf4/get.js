@@ -1,5 +1,5 @@
 import PrimitiveGet from "./primitive-get"
 
-export function Get(leaf, [x, y]) {
+export default function Get(leaf, [x, y]) {
   return PrimitiveGet(leaf, x, y)
 }
