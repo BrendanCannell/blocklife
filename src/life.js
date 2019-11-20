@@ -42,6 +42,10 @@ Life.prototype.add = function(location) {
   return Set(this, location, true)
 }
 
+Life.prototype.boundingRect = function() {
+  return G.BoundingRect(this.grid)
+}
+
 Life.prototype.has = function(location) {
   return Get(this, location)
 }

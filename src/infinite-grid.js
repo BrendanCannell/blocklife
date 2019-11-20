@@ -4,6 +4,32 @@ import * as D from "./direction"
 
 export const LEAF_SIZE = T.LEAF_SIZE
 
+export function BoundingRect(grid) {
+  if (T.GetPopulation(grid.root) === 0) return null
+  let b = {
+    top:     Infinity,
+    bottom: -Infinity,
+    left:    Infinity,
+    right:  -Infinity
+  }
+  b = T.BoundingRect(grid.root, -grid.size/2, -grid.size/2, b)
+  b.topleft = {
+    x: b.left,
+    y: b.top
+  }
+  b.bottomright = {
+    x: b.right,
+    y: b.bottom
+  }
+  b.width  = b.right  - b.left
+  b.height = b.bottom - b.top
+  b.center = {
+    x: b.left + b.width/2,
+    y: b.top  + b.height/2
+  }
+  return b
+}
+
 export function Copy({size, root, empty}) {
   return {
     size,
@@ -26,14 +52,14 @@ export function FromLiving(locations) {
   return {size, root, empty}
 }
 
-export function* Living(infiniteGrid) {
-  let offset = infiniteGrid.size / 2
-  for (let [x, y] of T.Living(infiniteGrid.root))
+export function* Living(grid) {
+  let offset = grid.size / 2
+  for (let [x, y] of T.Living(grid.root))
     yield [x - offset, y - offset]
 }
 
-export function Next(infiniteGrid) {
-  let {size, root: r, empty: e} = infiniteGrid
+export function Next(grid) {
+  let {size, root: r, empty: e} = grid
     , C = T.Next(r, e, e, e, e, e, e, e, e)
     , N = T.Next(e, e, r, e, e, e, e, e, e)
     , S = T.Next(e, r, e, e, e, e, e, e, e)
@@ -129,12 +155,14 @@ function Grow(oldSize, center, north, south, west, east) {
   }
 }
 
+// [-size/2, size/2) -> [0, size)
 function GridLoc(size, [x, y]) {
   let d = size / 2
     , inRoot = -d <= x && x < d && -d <= y && y < d
   return inRoot ? [x + d, y + d] : null
 }
 
+// [0, size) -> [-size/2, size/2]
 function RootLoc (size, [x, y]) {
   let d = size / 2
   return [x - d, y - d]
