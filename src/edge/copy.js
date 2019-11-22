@@ -1,8 +1,8 @@
 import {HASH} from "./constants"
 
-export default ({Malloc, Recur: Copy}) =>
+export default ({Allocate, Recur: Copy}) =>
   function EdgeCopy(edge) {
-    let raw = Malloc()
+    let raw = Allocate()
       , hasLeafChildren = typeof edge[0] === 'number'
     if (hasLeafChildren) {
       raw[0] = edge[0]

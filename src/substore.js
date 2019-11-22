@@ -1,7 +1,7 @@
-let Substore = ({Malloc, Copy}) => function New(pool = [], inUse = 0) {
+let Substore = ({Allocate, Copy}) => function New(pool = [], inUse = 0) {
   let store = {
-    Malloc: () => {
-      if (inUse === pool.length) pool.push(Malloc())
+    Allocate: () => {
+      if (inUse === pool.length) pool.push(Allocate())
       return pool[inUse++]
     },
     Clear: () => {

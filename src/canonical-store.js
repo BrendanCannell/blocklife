@@ -15,13 +15,13 @@ export default Storables => {
 }
 
 import S from "./substore"
-function Substore(MallocCopy) {
-  let Substore = S(MallocCopy)
+function Substore(AllocateCopy) {
+  let Substore = S(AllocateCopy)
   return function CanonicalSubstore(substore = Substore(), hashTable = new Map()) {
     let id = Math.random()
     return {
-      Malloc: (...args) => {
-        let obj = substore.Malloc(...args)
+      Allocate: (...args) => {
+        let obj = substore.Allocate(...args)
         obj.storeId = id
         return obj
       },

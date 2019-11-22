@@ -1,15 +1,15 @@
 import Store from "../src/store"
 import * as R from "../src/leaf"
 
-// var store = Store({Rows: R.Malloc})
+// var store = Store({Rows: R.Allocate})
 
 // console.log(store.Rows.next)
 
-// var r1 = store.Rows.Malloc()
+// var r1 = store.Rows.Allocate()
 
 // console.log("r1", store.Rows.next)
 
-// var r2 = store.Rows.Malloc()
+// var r2 = store.Rows.Allocate()
 
 // console.log("r2", store.Rows.next)
 
@@ -21,11 +21,11 @@ import * as R from "../src/leaf"
 
 // console.log("free r2", store.Rows.next)
 
-// var r1 = store.Rows.Malloc()
+// var r1 = store.Rows.Allocate()
 
 // console.log("r1", store.Rows.next)
 
-// var r2 = store.Rows.Malloc()
+// var r2 = store.Rows.Allocate()
 
 // console.log("r2", store.Rows.next)
 

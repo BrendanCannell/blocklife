@@ -1,7 +1,7 @@
 import * as U from "../src/util"
 import Store from "../src/canonical-store32"
 import LetStore from "../src/let-store"
-import Malloc from "../src/leaf32/malloc"
+import Allocate from "../src/leaf32/Allocate"
 import CanonicalConstructor from "../src/leaf32/canonical-constructor"
 import FromLiving from "../src/leaf32/from-living"
 import Get from "../src/leaf32/get"
@@ -11,7 +11,7 @@ import Set from "../src/leaf32/set"
 
 let L = {
   ...U.map(fn => fn())({Get, Living}),
-  ...U.map(fn => CanonicalConstructor(fn({Malloc})))({FromLiving, Next, Set})
+  ...U.map(fn => CanonicalConstructor(fn({Allocate})))({FromLiving, Next, Set})
 }
 
 // {

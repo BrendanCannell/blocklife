@@ -1,8 +1,8 @@
 import QuadrantLocation from "./quadrant-location"
 
-export default ({Malloc, Recur: Set}) =>
+export default ({Allocate, Recur: Set}) =>
   function BranchSet(branch, pairs) {
-    let raw = Malloc(branch)
+    let raw = Allocate(branch)
       , size = branch.size
       , partitions = [[], [], [], []]
     raw.size = size

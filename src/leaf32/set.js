@@ -1,9 +1,9 @@
 import {SIZE} from "./constants"
 import Mutate from "./mutate"
 
-export default ({Malloc}) =>
+export default ({Allocate}) =>
   function LeafSet(leaf, pairs) {
-    let raw = Malloc(leaf)
+    let raw = Allocate(leaf)
     for (let i = 0; i < SIZE; i++)
       raw[i] = leaf[i]
     for (let [loc, state] of pairs)

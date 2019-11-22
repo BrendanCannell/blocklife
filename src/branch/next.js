@@ -1,12 +1,12 @@
 import * as D from "../direction"
 
-export default ({Malloc, Recur: Next}) =>
+export default ({Allocate, Recur: Next}) =>
   function BranchNext(
     branch,
     N,  S,  W,  E,
     NW, NE, SW, SE
   ) {
-    let raw = Malloc(branch)
+    let raw = Allocate(branch)
       , b = branch
       , subgrids = [
           NW[D.SE],

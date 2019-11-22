@@ -1,8 +1,8 @@
 import QuadrantLocation from "./quadrant-location"
 
-export default ({Malloc, Recur: FromLiving}) =>
+export default ({Allocate, Recur: FromLiving}) =>
   function BranchFromLiving(size, locations) {
-    let raw = Malloc()
+    let raw = Allocate()
       , partitions = [[], [], [], []]
     raw.size = size
     for (let loc of locations) {

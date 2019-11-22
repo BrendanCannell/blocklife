@@ -4,10 +4,10 @@ import FixByNode from "./fix-by-node"
 import {SIZE as LEAF_SIZE} from "./leaf32/constants"
 
 import {
-  Malloc as MallocCtx,
+  Allocate as AllocateCtx,
   CopyMemoTable as CopyMemoTableCtx
 } from "./context"
-let Malloc = U.map(MC => (...args) => MC()(...args))(MallocCtx)
+let Allocate = U.map(MC => (...args) => MC()(...args))(AllocateCtx)
 
 import ToCanonicalizeBranchConstructor from "./branch/canonical-constructor"
 import ToCanonicalizeEdgeConstructor from "./edge/canonical-constructor"
@@ -47,7 +47,7 @@ let Leaf = U.stripLeft('Leaf')({
 import EdgeCopy from "./edge/copy"
 import EdgeGetHash from "./edge/get-hash"
 import EdgeNew from "./edge/new"
-let CanonicalEdgeNew = CanonicalizeEdgeConstructor(EdgeNew({Malloc: Malloc.Edge}))
+let CanonicalEdgeNew = CanonicalizeEdgeConstructor(EdgeNew({Allocate: Allocate.Edge}))
 let CanonicalizeBranchConstructor = ToCanonicalizeBranchConstructor({
   EdgeNew: CanonicalEdgeNew,
   LEAF_SIZE,
@@ -61,7 +61,7 @@ let MemoizedEdgeCopy =
   MemoizeCopy({MemoTable: CopyMemoTableCtx})(
     CanonicalizeEdgeConstructor(
       EdgeCopy({
-        Malloc: Malloc.Edge,
+        Allocate: Allocate.Edge,
         Recur: edge => MemoizedEdgeCopy(edge)
       })
     )
@@ -93,7 +93,7 @@ let Branch = U.stripLeft('Branch')({
 
 let MN = MemoizeNext({
       LEAF_SIZE,
-      Malloc: Malloc.Neighborhood,
+      Allocate: Allocate.Neighborhood,
       LeafGetEdge,
       LeafGetCorner,
       BranchGetEdge,
@@ -101,19 +101,19 @@ let MN = MemoizeNext({
       EdgeGetHash,
       NodeGetHash: node => node.size === LEAF_SIZE ? LeafGetHash(node) : BranchGetHash(node)
     })
-  , ConfigureRecursiveConstructors = (C8ize, Malloc, {Copy, FromLiving, Next, Set}) => {
-      let MallocAndC8ize = fn => Lift(C8ize)(LiftNamed({Malloc})(fn))
+  , ConfigureRecursiveConstructors = (C8ize, Allocate, {Copy, FromLiving, Next, Set}) => {
+      let AllocateAndC8ize = fn => Lift(C8ize)(LiftNamed({Allocate})(fn))
         , MC = MemoizeCopy({GetOriginal: obj => obj, MemoTable: CopyMemoTableCtx}) 
       return {
-        Copy: Lift(MC)(MallocAndC8ize(Copy)),
-        FromLiving: MallocAndC8ize(FromLiving),
-        Set: MallocAndC8ize(Set),
-        Next: Lift(MN)(MallocAndC8ize(Next))
+        Copy: Lift(MC)(AllocateAndC8ize(Copy)),
+        FromLiving: AllocateAndC8ize(FromLiving),
+        Set: AllocateAndC8ize(Set),
+        Next: Lift(MN)(AllocateAndC8ize(Next))
       }
     }
   , recursiveConstructors = U.zip({
-      Leaf:   ConfigureRecursiveConstructors(CanonicalizeLeafConstructor,   Malloc.Leaf,   Leaf),
-      Branch: ConfigureRecursiveConstructors(CanonicalizeBranchConstructor, Malloc.Branch, Branch)
+      Leaf:   ConfigureRecursiveConstructors(CanonicalizeLeafConstructor,   Allocate.Leaf,   Leaf),
+      Branch: ConfigureRecursiveConstructors(CanonicalizeBranchConstructor, Allocate.Branch, Branch)
     })
   , recursiveGetters = U.zip(U.map(U.pick(['BoundingRect', 'Get', 'Living']))({Leaf, Branch}))
   , toFixByNode = {...recursiveGetters, ...U.pick(['Copy', 'Next', 'Set'])(recursiveConstructors)}
@@ -148,7 +148,7 @@ let MN = MemoizeNext({
     }
   , withNewBranch = {
       ...withGetters,
-      NewBranch: CanonicalizeBranchConstructor(BranchNew({Malloc: Malloc.Branch}))
+      NewBranch: CanonicalizeBranchConstructor(BranchNew({Allocate: Allocate.Branch}))
     }
   , named = U.map(U.setName)(withNewBranch)
 

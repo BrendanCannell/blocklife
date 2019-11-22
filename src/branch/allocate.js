@@ -1,4 +1,4 @@
-export default function BranchMalloc() {
+export default function BranchAllocate() {
   let branch = [null, null, null, null]
 
   branch.size = 0

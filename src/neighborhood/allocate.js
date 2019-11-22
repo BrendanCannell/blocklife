@@ -1,4 +1,4 @@
-export default function NeighborhoodMalloc() {
+export default function NeighborhoodAllocate() {
   return {
     size: 0,
     node: null,

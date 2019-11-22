@@ -1,10 +1,10 @@
-export default ({Malloc, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge, BranchGetCorner}) =>
+export default ({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge, BranchGetCorner}) =>
   function NewNeighborhood(
     node,
     // N,  S,  W,  E,
     // NW, NE, SW, SE
   ) {
-    let raw = Malloc()
+    let raw = Allocate()
       , size = node.size
     raw.size = size
     raw.node = node

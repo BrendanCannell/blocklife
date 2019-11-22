@@ -1,6 +1,6 @@
 import {SIZE} from "./constants"
 
-export default function LeafMalloc() {
+export default function LeafAllocate() {
   let leaf = new Int32Array(SIZE + 1)
 
   leaf.size = SIZE

@@ -1,3 +1,3 @@
 import Copy from "./copy"
-import Malloc from "./malloc"
-export default {Copy, Malloc}
+import Allocate from "./allocate"
+export default {Copy, Allocate}
