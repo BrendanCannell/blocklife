@@ -1,6 +1,6 @@
-export default function NeighborhoodMalloc() {
+export default function NeighborhoodAllocate() {
   return {
-    size: 0,
+    size: NaN,
     node: null,
     neighbors: [null, null, null, null, null, null, null, null],
     edges: [null, null, null, null],

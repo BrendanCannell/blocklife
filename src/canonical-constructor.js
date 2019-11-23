@@ -20,8 +20,8 @@ function MakeCanonicalize({Hash, Equal, SetDerived}, Canon) {
       var canonical = GetCanon(bin)
       var collision = canonical && !Equal(newObj, canonical)
       if (collision) {
+        console.log(`COLLISION: ${bin}\n`, {newObj, canonical})
         bin++
-        console.log("COLLISION")
       }
     } while (collision)
     if (!canonical) {

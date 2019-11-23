@@ -82,7 +82,8 @@ export function Set(grid, pairs) {
     return Set(grown, pairs)
   }
   else return {
-    size, empty,
+    size,
+    empty: T.Copy(empty),
     root: T.Set(root, withGridLocs)
   }
 }

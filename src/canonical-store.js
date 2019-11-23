@@ -1,9 +1,11 @@
 import * as U from "./util"
 
 export default Storables => {
-  let Substores = U.map(Substore)(Storables)
+  let storeGeneration = 0
+  let MakeCanonicalSubstores = U.map(ToMakeCanonicalSubstore)(Storables)
   return function Store() {
-    let substores = U.map(S => S())(Substores)
+    let sg = storeGeneration++
+      , substores = U.map(MCS => MCS(sg))(MakeCanonicalSubstores)
       , Clear = () => {
           for (let s in substores) substores[s].Clear()
           return store
@@ -15,14 +17,13 @@ export default Storables => {
 }
 
 import S from "./substore"
-function Substore(MallocCopy) {
-  let Substore = S(MallocCopy)
-  return function CanonicalSubstore(substore = Substore(), hashTable = new Map()) {
-    let id = Math.random()
+function ToMakeCanonicalSubstore(Storable) {
+  let MakeSubstore = S(Storable)
+  return function MakeCanonicalSubstore(storeGeneration, substore = MakeSubstore(), hashTable = new Map()) {
     return {
-      Malloc: (...args) => {
-        let obj = substore.Malloc(...args)
-        obj.storeId = id
+      Allocate: (...args) => {
+        let obj = substore.Allocate(...args)
+        obj.storeGeneration = storeGeneration
         return obj
       },
       Free: substore.Free,
@@ -33,7 +34,7 @@ function Substore(MallocCopy) {
         store: substore.Show(),
         hashTable: hashTable.size
       }),
-      Copy: () => CanonicalSubstore(substore.Copy(), new Map(hashTable))
+      Copy: () => MakeCanonicalSubstore(storeGeneration, substore.Copy(), new Map(hashTable))
     }
   }
 }

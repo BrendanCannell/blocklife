@@ -1,13 +1,13 @@
 import * as D from "../direction"
 import {SIZE, WEST_EDGE} from "./constants"
 
-export default ({Malloc}) =>
+export default ({Allocate}) =>
   function LeafNext(
     leaf,
     N, S, W, E,
     NW, NE, SW, SE
   ) {
-    let raw = Malloc(leaf)
+    let raw = Allocate(leaf)
 
     // Set up row data for the row just north of the block (`north.south`)...
       , rowN = N.edges[D.S]

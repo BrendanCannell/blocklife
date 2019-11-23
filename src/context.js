@@ -7,11 +7,11 @@ export let Canon = {
   Neighborhood: Var('Canon/Neighborhood')
 }
 
-export let Malloc = {
-  Branch: Var('Malloc/Branch'),
-  Edge: Var('Malloc/Edge'),
-  Leaf: Var('Malloc/Leaf'),
-  Neighborhood: Var('Malloc/Neighborhood')
+export let Allocate = {
+  Branch: Var('Allocate/Branch'),
+  Edge: Var('Allocate/Edge'),
+  Leaf: Var('Allocate/Leaf'),
+  Neighborhood: Var('Allocate/Neighborhood')
 }
 
 export let CopyMemoTable = Var('CopyMemoTable')

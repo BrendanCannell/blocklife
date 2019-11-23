@@ -1,8 +1,8 @@
 import {SIZE} from "./constants"
 
-export default ({Malloc}) =>
+export default ({Allocate}) =>
   function LeafCopy(leaf) {
-    let raw = Malloc()
+    let raw = Allocate()
     for (let i = 0; i < SIZE; i++)
       raw[i] = leaf[i]
     raw.hash = leaf.hash

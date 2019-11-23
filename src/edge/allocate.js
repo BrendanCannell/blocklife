@@ -1,3 +1,3 @@
 export default function EdgeAllocate() {
-  return [null, null, null]
+  return [null, null, NaN]
 }

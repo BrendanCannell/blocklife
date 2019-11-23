@@ -37,6 +37,7 @@ function Canonicalizable({EdgeNew, LEAF_SIZE, LeafGetHash, LeafGetPopulation, Le
   }
 
   function BranchWithLeafChildrenSetDerived(branch, hash) {
+    let sg = branch.storeGeneration
     branch.hash = hash
     var population = 0
     for (let i = 0; i < 4; i++) {
@@ -44,6 +45,7 @@ function Canonicalizable({EdgeNew, LEAF_SIZE, LeafGetHash, LeafGetPopulation, Le
         , e0 = LeafGetEdge(branch[sq0], i)
         , e1 = LeafGetEdge(branch[sq1], i)
       branch.edges[i] = EdgeNew(e0, e1)
+      if (sg !== branch.edges[i].storeGeneration) throw Error("Mixed stores:\n" + JSON.stringify(branch, null, 2))
       branch.corners[i] = LeafGetCorner(branch[i], i)
       population += LeafGetPopulation(branch[i])
     }

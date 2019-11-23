@@ -1,6 +1,6 @@
-export default ({Malloc, Recur: Copy, EdgeCopy}) => {
+export default ({Allocate, Recur: Copy, EdgeCopy}) => {
   return function BranchCopy(branch) {
-    let raw = Malloc()
+    let raw = Allocate()
     for (let i = 0; i < 4; i++)
       raw[i] = Copy(branch[i])
     raw.size = branch.size

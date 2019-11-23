@@ -1,3 +1,4 @@
+import Allocate from "./allocate"
 import Copy from "./copy"
-import Malloc from "./malloc"
-export default {Copy, Malloc}
+import Free from "./free"
+export default {Allocate, Copy, Free}

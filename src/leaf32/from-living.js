@@ -1,9 +1,9 @@
 import {SIZE} from "./constants"
 import Mutate from "./mutate"
 
-export default ({Malloc}) =>
+export default ({Allocate}) =>
   function LeafFromLiving(_, locations) {
-    let raw = Malloc()
+    let raw = Allocate()
     for (let i = 0; i < SIZE; i++)
       raw[i] = 0
     for (let loc of locations)
