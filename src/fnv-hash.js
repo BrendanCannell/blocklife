@@ -13,7 +13,7 @@ export function of() {
   for (let i = 0; i < len; i++)
     hash = reducer(hash, arguments[i] | 0)
 
-  return hash
+  return checkNaN(hash)
 }
 
 export function ofArray(array) {
@@ -30,7 +30,7 @@ export function ofArray(array) {
     }
   }
 
-  return hash
+  return checkNaN(hash)
 }
 
 export function ofArrayBy(array, GetHash) {
@@ -40,7 +40,7 @@ export function ofArrayBy(array, GetHash) {
   for (let i = 0; i < len; i++)
     hash = reducer(hash, GetHash(array[i]) | 0)
 
-  return hash
+  return checkNaN(hash)
 }
 
 export function ofHashedArray(array) {
@@ -50,7 +50,7 @@ export function ofHashedArray(array) {
   for (let i = 0; i < len; i++)
     hash = reducer(hash, array[i].hash | 0)
 
-  return hash
+  return checkNaN(hash)
 }
 
 export function reducer(hash, n) {
