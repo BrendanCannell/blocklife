@@ -1,34 +1,24 @@
 import {AscXGroupedByDescY as order} from "./util/location"
 import Glider from "./util/glider"
-import Life from "../src/life"
+import * as L from "../src/life"
 
 export function testMarshalGlider(t) {
   for (let direction in Glider) {
-    let glider = Glider[direction](-4)
-      , actual = [...Life(glider).values()].sort(order)
-    t.assert(actual == glider, 'marshal/unmarshall a glider')
+    let expected = Glider[direction](-4)
+      , glider = L.FromLiving(expected)
+      , actual = [...L.Values(glider)].sort(order)
+    t.assert(actual == expected, 'marshal/unmarshall a glider')
   }
 }
 
 export function testMoveGlider(t) {
   for (let direction in Glider) {
     let count = 256
-      , glider = Glider[direction](-count/4, [0,-5])
-      , life = Life(glider)
+      , glider = L.FromLiving(Glider[direction](-count/4, [0,-5]))
     for (let i = 0; i < count; i++) {
-      life = life.step({canFree: true})
+      glider = L.Step(glider, {canFree: true})
     }
-    let actual = [...life.values()].sort(order)
-      , expected = Glider[direction](3*count/4, [0,-5])
-    t.assert(actual == expected, 'move a glider across the origin')
-  }
-}
-
-export function testMoveGliderMultistep(t) {
-  for (let direction in Glider) {
-    let count = 256
-      , glider = Glider[direction](-count/4, [0,-5])
-      , actual = [...Life(glider).step({count, canFree: true}).values()].sort(order)
+    let actual = [...L.Values(glider)].sort(order)
       , expected = Glider[direction](3*count/4, [0,-5])
     t.assert(actual == expected, 'move a glider across the origin')
   }
@@ -45,8 +35,8 @@ export function testDrawGlider(t) {
     , bottom = y0 + height
     , viewport = {v0: [x0, y0], v1: [x0 + width, y0 + height], width, height, left, right, top, bottom}
     , glider1 = Glider.SE(0, [x0    , y0    ])
-    , life1 = Life([])
-  glider1.forEach(location => life1 = life1.add(location))
+    , life1 = L.Empty()
+  glider1.forEach(location => life1 = L.Add(life1, location, {canFree: true}))
   let scale = 3
     , scaledWidth = width * scale
     , scaledHeight = height * scale
@@ -59,7 +49,7 @@ export function testDrawGlider(t) {
         width: scaledWidth,
         height: scaledHeight
       }
-    , data2 = life1.render({imageData: imageData2, viewport, colors}).data
+    , data2 = L.Render(life1, {imageData: imageData2, viewport, colors}).data
     , expected2 = [
         [0, 1, 0, 0],
         [0, 0, 1, 0],
