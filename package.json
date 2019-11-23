@@ -22,18 +22,16 @@
   },
   "homepage": "https://github.com/BrendanCannell/lowlife#readme",
   "devDependencies": {
+    "lodash-es": "4.17.15",
     "luna-testing": "1.3.2",
     "rollup": "1.19.4",
-    "rollup-plugin-node-builtins": "2.1.2",
     "rollup-plugin-node-resolve": "5.2.0",
     "rollup-plugin-terser": "5.1.1",
     "seedrandom": "3.0.1",
     "source-map-support": "0.5.12"
   },
   "dependencies": {
-    "@brendancannell/dysc": "0.2.0",
-    "lodash-es": "^4.17.15",
-    "rho-contracts": "0.0.5"
+    "@brendancannell/dysc": "0.2.0"
   },
   "files": [
     "dist"
