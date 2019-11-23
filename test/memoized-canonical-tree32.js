@@ -2,7 +2,7 @@ import {AscXGroupedByDescY as order} from "./util/location"
 import Glider from "./util/glider"
 import Store from "../src/canonical-store32"
 import LetStore from "../src/let-store"
-import T from "../src/memoized-canonical-tree32"
+import T from "../src/memoized-tree32"
 
 let testDirection = direction => t => {
   let size = 64

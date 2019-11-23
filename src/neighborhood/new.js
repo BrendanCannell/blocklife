@@ -1,5 +1,8 @@
-export default ({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge, BranchGetCorner}) =>
-  function NewNeighborhood(
+export default ({Allocate, Branch, Leaf}) =>{
+  let {GetEdge: BranchGetEdge, GetCorner: BranchGetCorner} = Branch
+  let {GetEdge: LeafGetEdge, GetCorner: LeafGetCorner, SIZE: LEAF_SIZE} = Leaf
+
+  return function NewNeighborhood(
     node,
     // N,  S,  W,  E,
     // NW, NE, SW, SE
@@ -11,6 +14,7 @@ export default ({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge,
     raw.node = node
 
     let neighborsOffset = arguments.length - 8
+    let mixedStores = false
     if (size === LEAF_SIZE)
       for (let i = 0, j = neighborsOffset; i < 4; i++, j++) {
         raw.neighbors[i]   = arguments[j]
@@ -28,22 +32,9 @@ export default ({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge,
           , oppositeCorner = 3 - i
         raw.edges  [i] = BranchGetEdge  (arguments[j],   oppositeEdge)
         raw.corners[i] = BranchGetCorner(arguments[j+4], oppositeCorner)
+        if (sg !== arguments[i].storeGeneration || sg !== arguments[j].storeGeneration) mixedStores = true
       }
-    for (let i = 0; i < 4; i++)
-      if ((size >  LEAF_SIZE && sg !== raw.edges[i].storeGeneration)
-          || sg !== raw.neighbors[i].storeGeneration
-          || sg !== raw.neighbors[i + 4].storeGeneration) {
-        console.error("Mixed stores:\n" + JSON.stringify(raw, (key, value) => {
-          switch (key) {
-            case 'storeGeneration': return value
-            case 'node': return value.storeGeneration
-            case 'edges': return size > LEAF_SIZE ? value.map(n => n.storeGeneration) : undefined
-            case 'neighbors': return value.map(n => n.storeGeneration)
-            case 'corners': return undefined
-            default: return value
-          }
-        }, 2))
-        throw Error("Mixed stores")
-      }
+    if (mixedStores) throw Error("Mixed stores", JSON.stringify(raw))
     return raw
   }
+}

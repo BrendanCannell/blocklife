@@ -1,9 +1,9 @@
 import CanonicalNeighborhoodConstructor from "./neighborhood/canonical-constructor"
 import NN from "./neighborhood/new"
 
-let MemoizeNext = ({LEAF_SIZE, Allocate, LeafGetEdge, LeafGetCorner, BranchGetEdge, BranchGetCorner, NodeGetHash, EdgeGetHash}) => function MemoizeNext(Next) {
-  let CNC = CanonicalNeighborhoodConstructor({LEAF_SIZE, Next, NodeGetHash, EdgeGetHash})
-    , NewNeighborhood = CNC(NN({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge, BranchGetCorner}))
+let MemoizeNext = ({Allocate, Branch, Edge, Leaf}) => function MemoizeNext(Next) {
+  let CNC = CanonicalNeighborhoodConstructor({Branch, Edge, Leaf, Next})
+    , NewNeighborhood = CNC(NN({Allocate, Branch, Edge, Leaf}))
   
   return function MemoizedNext(...args) {
     return NewNeighborhood(...args).next

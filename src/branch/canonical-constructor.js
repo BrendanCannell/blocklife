@@ -12,7 +12,15 @@ import BranchGetCorner from "./get-corner"
 import BranchGetEdge from "./get-edge"
 import BranchGetHash from "./get-hash"
 import BranchGetPopulation from "./get-population"
-function Canonicalizable({EdgeNew, LEAF_SIZE, LeafGetHash, LeafGetPopulation, LeafGetEdge, LeafGetCorner}) {
+function Canonicalizable({Edge, Leaf}) {
+  let {New: EdgeNew} = Edge
+  let {
+    SIZE: LEAF_SIZE,
+    GetCorner: LeafGetCorner,
+    GetEdge: LeafGetEdge,
+    GetHash: LeafGetHash,
+    GetPopulation: LeafGetPopulation,
+  } = Leaf
   let Canonicalizable = {BranchEqual, BranchHash, BranchSetDerived}
   return U.stripLeft('Branch')(Canonicalizable)
 

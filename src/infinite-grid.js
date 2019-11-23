@@ -1,5 +1,5 @@
 import * as U from "./util"
-import T from "./memoized-canonical-tree32"
+import T from "./memoized-tree32"
 import * as D from "./direction"
 
 export const LEAF_SIZE = T.LEAF_SIZE
