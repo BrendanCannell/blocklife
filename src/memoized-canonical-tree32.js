@@ -21,7 +21,6 @@ let CanonicalizeEdgeConstructor = ToCanonicalizeEdgeConstructor()
 let Lift = xf => fn => (...args) => xf(fn(...args))
   , LiftNamed = namedArgs => fn => (args = {}) => fn({...namedArgs, ...args})
 
-import LeafBoundingRect from "./leaf32/bounding-rect"
 import LeafCopy from "./leaf32/copy"
 import LeafFromLiving from "./leaf32/from-living"
 import LeafGet from "./leaf32/get"
@@ -33,7 +32,6 @@ import LeafLiving from "./leaf32/living"
 import LeafNext from "./leaf32/next"
 import LeafSet from "./leaf32/set"
 let Leaf = U.stripLeft('Leaf')({
-  LeafBoundingRect,
   LeafCopy,
   LeafFromLiving,
   LeafGet,
@@ -66,7 +64,6 @@ let MemoizedEdgeCopy =
       })
     )
   )
-import BranchBoundingRect from "./branch/bounding-rect"
 import BranchCopy from "./branch/copy"
 import BranchFromLiving from "./branch/from-living"
 import BranchGet from "./branch/get"
@@ -79,7 +76,6 @@ import BranchNew from "./branch/new"
 import BranchNext from "./branch/next"
 import BranchSet from "./branch/set"
 let Branch = U.stripLeft('Branch')({
-  BranchBoundingRect,
   BranchCopy: LiftNamed({EdgeCopy: MemoizedEdgeCopy})(BranchCopy),
   BranchFromLiving,
   BranchGet,
@@ -101,42 +97,43 @@ let MN = MemoizeNext({
       EdgeGetHash,
       NodeGetHash: node => node.size === LEAF_SIZE ? LeafGetHash(node) : BranchGetHash(node)
     })
-  , ConfigureRecursiveConstructors = (C8ize, Allocate, {Copy, FromLiving, Next, Set}) => {
+  , Configure = (C8ize, Allocate, {Copy, FromLiving, Get, Living, Next, Set, New}) => {
       let AllocateAndC8ize = fn => Lift(C8ize)(LiftNamed({Allocate})(fn))
         , MC = MemoizeCopy({GetOriginal: obj => obj, MemoTable: CopyMemoTableCtx}) 
       return {
+        Get,
+        Living,
         Copy: Lift(MC)(AllocateAndC8ize(Copy)),
         FromLiving: AllocateAndC8ize(FromLiving),
         Set: AllocateAndC8ize(Set),
         Next: Lift(MN)(AllocateAndC8ize(Next))
       }
     }
-  , recursiveConstructors = U.zip({
-      Leaf:   ConfigureRecursiveConstructors(CanonicalizeLeafConstructor,   Allocate.Leaf,   Leaf),
-      Branch: ConfigureRecursiveConstructors(CanonicalizeBranchConstructor, Allocate.Branch, Branch)
+  , configured = U.zip({
+      Leaf:   Configure(CanonicalizeLeafConstructor,   Allocate.Leaf,   Leaf),
+      Branch: Configure(CanonicalizeBranchConstructor, Allocate.Branch, Branch)
     })
-  , recursiveGetters = U.zip(U.map(U.pick(['BoundingRect', 'Get', 'Living']))({Leaf, Branch}))
-  , toFixByNode = {...recursiveGetters, ...U.pick(['Copy', 'Next', 'Set'])(recursiveConstructors)}
-  , toFixBySize = U.pick(['FromLiving'])(recursiveConstructors)
+  , toFixByNode = U.pick(['Copy', 'Get', 'Living', 'Next', 'Set'])(configured)
+  , toFixBySize = U.pick(['FromLiving'])(configured)
   , fixed = {
       ...U.map(FixByNode(LEAF_SIZE))(toFixByNode),
       ...U.map(FixBySize(LEAF_SIZE))(toFixBySize)
     }
   , fixedCopy = fixed.Copy
   , memoTable = new Map()
-  , memoTableAccessors = {
+  , getSet = {
       GetMemo: key => memoTable.get(key),
       SetMemo: (key, value) => memoTable.set(key, value)
     }
-  , withCopyUsingMemoTable = {
+  , withCopyMemoTable = {
       ...fixed,
       Copy: (...args) => {
         memoTable.clear()
-        return CopyMemoTableCtx.let(memoTableAccessors, () => fixedCopy(...args))
+        return CopyMemoTableCtx.let(getSet, () => fixedCopy(...args))
       },
     }
   , withGetters = {
-      ...withCopyUsingMemoTable,
+      ...withCopyMemoTable,
       GetHash: node => {
         let GetHash = node.size === LEAF_SIZE ? LeafGetHash : BranchGetHash
         return GetHash(node)

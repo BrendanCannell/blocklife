@@ -1,3 +1,4 @@
-import Copy from "./copy"
 import Allocate from "./allocate"
-export default {Copy, Allocate}
+import Copy from "./copy"
+import Free from "./free"
+export default {Allocate, Copy, Free}

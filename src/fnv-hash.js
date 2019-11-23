@@ -1,6 +1,11 @@
 const FNV_PRIME = 16777619
 const FNV_OFFSET_BASIS = 2166136261
 
+let checkNaN = n => {
+  if (isNaN(n)) throw TypeError("Expected non-NaN: " + n)
+  return n
+}
+
 export function of() {
   let len = arguments.length
   let hash = FNV_OFFSET_BASIS
@@ -16,7 +21,7 @@ export function ofArray(array) {
   let hash = FNV_OFFSET_BASIS
 
   for (let i = 0; i < len; i++) {
-    let n = array[i] | 0
+    let n = checkNaN(array[i]) | 0
     for (let j = 0; j < 4; j++) {
       hash *= FNV_PRIME
       hash |= 0
@@ -50,7 +55,7 @@ export function ofHashedArray(array) {
 
 export function reducer(hash, n) {
   hash = hash | 0
-  n = n | 0
+  n = checkNaN(n) | 0
 
   for (let i = 0; i < 4; i++) {
     hash *= FNV_PRIME

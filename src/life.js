@@ -74,8 +74,16 @@ export function Population(life) {
   return G.GetPopulation(life.grid())
 }
 
-export function Remove(life, location) {
-  return Set(life, location, false)
+Life.prototype.hash = function() {
+  return G.GetHash(this.grid)
+}
+
+Life.prototype.population = function() {
+  return G.GetPopulation(this.grid)
+}
+
+Life.prototype.remove = function(location) {
+  return Set(this, location, false)
 }
 
 export function Render(life, renderCfg) {
@@ -97,17 +105,96 @@ export function Render(life, renderCfg) {
 }
 let RGBAToInt32 = rgba => new Int32Array(new Uint8ClampedArray(rgba).buffer)[0]
 
-export function Step(life, opts) {
-  let store = life.newStore()
-    , grid = LetStore(store, () => G.Next(life.grid()))
-    , recycledStore = Go(opts, 'canFree') && life.takeStore()
-  return Make(grid, store, recycledStore)
+// count = 1, canFree = false
+function StepOncePure(life) {
+  let nextStore = life.recycledStore ? life.recycledStore.Clear() : Store()
+    , nextGrid = LetStore(nextStore, () => G.Next(life.grid))
+  life.recycledStore = null // Moved to new owner (if present)
+  return Make(nextGrid, nextStore)
+}
+// count = 1, canFree = true
+function StepOnceMutate(life) {
+  let nextStore = life.recycledStore ? life.recycledStore.Clear() : Store()
+    , nextGrid = LetStore(nextStore, () => G.Next(life.grid))
+  life.recycledStore = life.store // Mutate -> allow old store to be recycled
+  life.grid = nextGrid
+  life.store = nextStore
+  return life
+}
+// count > 1, canFree = false
+function StepManyPure(life, count) {
+  var off = life.recycledStore || Store()
+    , on = Store()
+    , grid = life.grid
+  for (let i = 0; i < count; i++) {
+    [on, off] = [off, on]
+    grid = LetStore(on.Clear(), () => G.Next(grid))
+  }
+  life.recycledStore = off
+  return Make(grid, on)
 }
 
 export function Values(life) {
   return G.Living(life.grid())
 }
 
-function Go(obj, key) {
-  return typeof obj === 'object' && obj[key]
+Life.prototype.step = function({count = 1, canFree} = {}) {
+  if (count === 0) return this
+  let Step =
+      (count === 1 && !canFree) ? StepOncePure
+    : (count === 1 &&  canFree) ? StepOnceMutate
+    : (count >   1 && !canFree) ? StepManyPure
+    : (count >   1 &&  canFree) ? StepManyMutate
+    : undefined
+  return Step(this, count)
+}
+
+Life.prototype.values = function() {
+  return G.Living(this.grid)
+}
+
+function OwnerID() {}
+
+function setAltered(life) {
+  life.__altered = true
+  return life
+}
+
+Life.prototype.withMutations = function(fn) {
+  let mutable = this.asMutable()
+  fn(mutable)
+  return mutable.wasAltered()
+    ? mutable.__ensureOwner(this.__ownerID)
+    : this
+}
+
+Life.prototype.asMutable = function() {
+  return this.__ownerID
+    ? this
+    : this.__ensureOwner(new OwnerID())
+}
+
+Life.prototype.asImmutable = function() {
+  return this.__ensureOwner()
+}
+
+Life.prototype.wasAltered = function() {
+  return this.__altered
+}
+
+Life.prototype.__ensureOwner = function(ownerID) {
+  if (ownerID === this.__ownerID)
+    return this
+  else if (!ownerID) {
+    // `mutable.__ensureOwner()` -> change to immutable
+    if (this.size === 0)
+      return EMPTY
+    else {
+      this.__ownerID = ownerID
+      this.__altered = false
+      return this
+    }
+  }
+  // make own copy
+  else return copy(this, ownerID)
 }

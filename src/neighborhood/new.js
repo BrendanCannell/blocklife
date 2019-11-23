@@ -6,6 +6,7 @@ export default ({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge,
   ) {
     let raw = Allocate()
       , size = node.size
+      , sg = node.storeGeneration
     raw.size = size
     raw.node = node
 
@@ -28,6 +29,21 @@ export default ({Allocate, LEAF_SIZE, LeafGetEdge, LeafGetCorner, BranchGetEdge,
         raw.edges  [i] = BranchGetEdge  (arguments[j],   oppositeEdge)
         raw.corners[i] = BranchGetCorner(arguments[j+4], oppositeCorner)
       }
-
+    for (let i = 0; i < 4; i++)
+      if ((size >  LEAF_SIZE && sg !== raw.edges[i].storeGeneration)
+          || sg !== raw.neighbors[i].storeGeneration
+          || sg !== raw.neighbors[i + 4].storeGeneration) {
+        console.error("Mixed stores:\n" + JSON.stringify(raw, (key, value) => {
+          switch (key) {
+            case 'storeGeneration': return value
+            case 'node': return value.storeGeneration
+            case 'edges': return size > LEAF_SIZE ? value.map(n => n.storeGeneration) : undefined
+            case 'neighbors': return value.map(n => n.storeGeneration)
+            case 'corners': return undefined
+            default: return value
+          }
+        }, 2))
+        throw Error("Mixed stores")
+      }
     return raw
   }

@@ -52,14 +52,14 @@ export function FromLiving(locations) {
   return {size, root, empty}
 }
 
-export function* Living(grid) {
-  let offset = grid.size / 2
-  for (let [x, y] of T.Living(grid.root))
+export function* Living(infiniteGrid) {
+  let offset = infiniteGrid.size / 2
+  for (let [x, y] of T.Living(infiniteGrid.root))
     yield [x - offset, y - offset]
 }
 
-export function Next(grid) {
-  let {size, root: r, empty: e} = grid
+export function Next(infiniteGrid) {
+  let {size, root: r, empty: e} = infiniteGrid
     , C = T.Next(r, e, e, e, e, e, e, e, e)
     , N = T.Next(e, e, r, e, e, e, e, e, e)
     , S = T.Next(e, r, e, e, e, e, e, e, e)
@@ -108,7 +108,8 @@ export function Set(grid, pairs) {
     return Set(grown, pairs)
   }
   else return {
-    size, empty,
+    size,
+    empty: T.Copy(empty),
     root: T.Set(root, withGridLocs)
   }
 }

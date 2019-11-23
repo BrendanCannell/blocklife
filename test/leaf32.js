@@ -1,7 +1,7 @@
 import * as U from "../src/util"
 import Store from "../src/canonical-store32"
 import LetStore from "../src/let-store"
-import Allocate from "../src/leaf32/Allocate"
+import Allocate from "../src/leaf32/allocate"
 import CanonicalConstructor from "../src/leaf32/canonical-constructor"
 import FromLiving from "../src/leaf32/from-living"
 import Get from "../src/leaf32/get"
