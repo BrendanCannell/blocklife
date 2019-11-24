@@ -41,7 +41,6 @@ export default ({Allocate, Recur: Next}) =>
         , W = -1
         , E =  1
       
-      if (!sg[_]) debugger
       raw[q] = Next(
         sg[_],
         sg[_ + N],
