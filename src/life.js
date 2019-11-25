@@ -37,7 +37,7 @@ export function FromLiving(locations) {
 export function Copy(life, opts) {
   let store = life.newStore()
     , grid = LetStore(store, () => G.Copy(life.grid()))
-    , recycledStore =  Go(opts, 'canFree') && life.takeStore()
+    , recycledStore = Go(opts, 'canFree') && life.takeStore()
   return Make(grid, store, recycledStore)
 }
 
