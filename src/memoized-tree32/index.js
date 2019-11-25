@@ -64,6 +64,7 @@ Tree.Copy = WithClearedMemoTable(copyMemoTable)(Tree.Copy)
 // Non-recursive config
 Tree.GetHash = SwitchByNode('GetHash')
 Tree.GetPopulation = SwitchByNode('GetPopulation')
+Tree.GetSize = SwitchByNode('GetSize')
 
 // Misc
 Tree.NewBranch = Branch.New

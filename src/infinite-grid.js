@@ -39,17 +39,21 @@ export function Copy({size, root, empty}) {
 }
 
 export function FromLiving(locations) {
-  let max = locations.reduce((max, [x, y]) =>
-        Math.max(max, Math.abs(x), Math.abs(y)), 1)
-    , ceilPow2 = Math.pow(2, Math.ceil(Math.log2(max + 1)))
-    , offset = Math.max(ceilPow2, T.LEAF_SIZE)
-    , size = offset * 2
-    , root = T.FromLiving(
-        size,
-        locations.map(([x, y]) => [x + offset, y + offset]),
-      )
-    , empty = T.FromLiving(size, [])
-  return {size, root, empty}
+  // Find the smallest square centered at the origin that contains the locations
+  var halfSize = 1
+  for (let [x, y] of locations)
+    halfSize = Math.max(halfSize, Math.abs(x), Math.abs(y))
+  // Round up to the nearest power of two.
+  halfSize = Math.pow(2, Math.ceil(Math.log2(halfSize + 1)))
+  // The minimum grid size is twice the leaf size.
+  halfSize = Math.max(halfSize, T.LEAF_SIZE)
+  let offsetLocations = locations.map(([x, y]) => [x + halfSize, y + halfSize])
+  let size = halfSize * 2
+  return {
+    size,
+    root:  T.FromLiving(size, offsetLocations),
+    empty: T.FromLiving(size, [])
+  }
 }
 
 export function* Living(infiniteGrid) {
@@ -60,11 +64,15 @@ export function* Living(infiniteGrid) {
 
 export function Next(infiniteGrid) {
   let {size, root: r, empty: e} = infiniteGrid
+    // Get the next generation of the root
     , C = T.Next(r, e, e, e, e, e, e, e, e)
+    // Also get the next generation of empty regions to N/S/W/E
     , N = T.Next(e, e, r, e, e, e, e, e, e)
     , S = T.Next(e, r, e, e, e, e, e, e, e)
     , W = T.Next(e, e, e, e, r, e, e, e, e)
     , E = T.Next(e, e, e, r, e, e, e, e, e)
+    // These will usually be empty
+    // If they aren't, expand the grid
     , mustGrow = (
            N.population !== 0
         || S.population !== 0
@@ -72,7 +80,7 @@ export function Next(infiniteGrid) {
         || E.population !== 0
       )
     , newRoot = mustGrow
-      ? Grow(size, C, N, S, W, E)
+      ? Grow(C, N, S, W, E)
       : {
         size,
         root: C,
@@ -104,7 +112,7 @@ export function Set(grid, pairs) {
     , withGridLocs = pairs.map(([loc, state]) => [GridLoc(size, loc), state])
     , mustGrow = withGridLocs.some(([loc]) => !loc)
   if (mustGrow) {
-    let grown = Grow(size, root, empty, empty, empty, empty)
+    let grown = Grow(root, empty, empty, empty, empty)
     return Set(grown, pairs)
   }
   else return {
@@ -114,8 +122,9 @@ export function Set(grid, pairs) {
   }
 }
 
-function Grow(oldSize, center, north, south, west, east) {
-  let emptyGrandchild = T.FromLiving(oldSize / 2, [])
+function Grow(center, north, south, west, east) {
+  let oldSize = T.GetSize(center)
+    , emptyGrandchild = T.FromLiving(oldSize / 2, [])
     , e = emptyGrandchild
     , size = oldSize * 2
     , root = T.NewBranch(

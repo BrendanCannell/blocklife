@@ -14,6 +14,7 @@ import GetCorner from "./get-corner"
 import GetEdge from "./get-edge"
 import GetHash from "./get-hash"
 import GetPopulation from "./get-population"
+import GetSize from "./get-population"
 import Living from "./living"
 import Next from "./next"
 import PrimitiveGet from "./primitive-get"
@@ -31,10 +32,11 @@ let raw = {
   Free,
   FromLiving,
   Get,
-  GetEdge,
   GetCorner,
+  GetEdge,
   GetHash,
   GetPopulation,
+  GetSize,
   Living,
   Next,
   PrimitiveGet,

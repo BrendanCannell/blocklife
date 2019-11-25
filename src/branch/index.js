@@ -2,10 +2,11 @@ import BoundingRect from "./bounding-rect"
 import Copy from "./copy"
 import FromLiving from "./from-living"
 import Get from "./get"
+import GetCorner from "./get-corner"
+import GetEdge from "./get-edge"
 import GetHash from "./get-hash"
 import GetPopulation from "./get-population"
-import GetEdge from "./get-edge"
-import GetCorner from "./get-corner"
+import GetSize from "./get-size"
 import Living from "./living"
 import New from "./new"
 import Next from "./next"
@@ -21,6 +22,7 @@ export default {
   GetCorner,
   GetHash,
   GetPopulation,
+  GetSize,
   Living,
   New,
   Next,
