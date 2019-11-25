@@ -46,16 +46,11 @@ export let forEach = xf => function forEach(xs) {
 
 export let go = (data, ...ops) => pipe(ops)(data)
 
-// export let inspect = x => (log(UtilInspect(x, false, null, true)), x)
-
 export let isIterable = x => x && typeof x[Symbol.iterator] === 'function'
 
-// (B -> C) -> A -> (A -> B) -> C
-export let lift = after => fn => before =>
-  after(before(fn))
+export let compose = f => g => (...args) => f(g(...args))
 
-export let liftOpts = afterOpts => fn => beforeOpts =>
-  fn({...beforeOpts, ...afterOpts})
+export let partialOpts = fn => optsNow => optsLater => fn({...optsNow, ...optsLater})
 
 export let log = x => console.log(x) || x
 

@@ -1,6 +1,6 @@
 import {SIZE, WEST_EDGE} from "./constants"
 
-let BoundingRect = () => function LeafBoundingRect(leaf, leafLeft, leafTop, boundingRect) {
+let BoundingRect = function LeafBoundingRect(leaf, leafLeft, leafTop, boundingRect) {
   if (leaf.population === 0) return boundingRect
   for (let y = 0; y < SIZE; y++) {
     let row = leaf[y]

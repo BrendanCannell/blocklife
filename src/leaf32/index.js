@@ -42,16 +42,18 @@ let raw = {
   Set,
   SetDerived
 }
-let withAllocate = {
-  ...raw,
-  ...U.map(fn => fn({Allocate}))({BoundingRect, Copy, FromLiving, Get, Living, Next, Set})
-}
-let constructors = U.pick(['Copy', 'FromLiving', 'Next', 'Set'])(withAllocate)
+let constructors = U.pick(['Copy', 'FromLiving', 'Next', 'Set'])(raw)
 let withSetDerived = {
-  ...withAllocate,
-  ...U.map(fn => (...args) => SetDerived(fn(...args)))(constructors)
+  ...raw,
+  ...U.map(ConfigureConstructor)(constructors)
 }
 
 export {withSetDerived as Test}
 
 export default raw
+
+function ConfigureConstructor(fn) {
+  let withAllocate = fn({Allocate})
+  let withSetDerived = (...args) => SetDerived(withAllocate(...args))
+  return withSetDerived
+}

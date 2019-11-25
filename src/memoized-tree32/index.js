@@ -1,79 +1,82 @@
 import * as U from "../util"
-import FixBySize from "../fix-by-size"
-import FixByNode from "../fix-by-node"
+import FixByArg0 from "../fix-by-arg0"
+import FixByArg0Size from "../fix-by-arg0-size"
 import {SIZE as LEAF_SIZE} from "../leaf32/constants"
 
 import {
-  Allocate as AllocateCtx,
-  CopyMemoTable as CopyMemoTableCtx
+  Allocate as AllocateCtx
 } from "../context"
 let Allocate = U.map(AC => (...args) => AC()(...args))(AllocateCtx)
 
 import MemoizeNext from "../memoize-next"
-import MemoizeCopy from "../memoize-copy"
+import MemoizeWithTable from "../memoize-with-table"
+import WithClearedMemoTable from "../with-cleared-memo-table"
 import Leaf from "./leaf"
 import Edge from "./edge"
 import Branch from "./branch"
 import Render from "./render"
 
-let Lift = xf => fn => (...args) => xf(fn(...args))
-let LiftNamed = namedArgs => fn => (args = {}) => fn({...namedArgs, ...args})
+// Configure each case of each recursive functions, where needed
+// Because the branch cases can't be provided with their recursive callbacks until the end, their configuration involves some extra function composition and partial application.
 
-let MN = MemoizeNext({
-      Allocate: Allocate.Neighborhood,
-      Branch, Leaf, Edge
-    })
-let ConfigureRecursiveConstructors = ({CanonicalizeConstructor, Allocate, Copy, FromLiving, Next, Set}) => {
-      let AllocateAndC8ize = fn => Lift(CanonicalizeConstructor)(LiftNamed({Allocate})(fn))
-        , MC = MemoizeCopy({MemoTable: CopyMemoTableCtx}) 
-      return {
-        Copy: Lift(MC)(AllocateAndC8ize(Copy)),
-        FromLiving: AllocateAndC8ize(FromLiving),
-        Set: AllocateAndC8ize(Set),
-        Next: Lift(MN)(AllocateAndC8ize(Next))
-      }
-    }
-let recursiveConstructors = U.zip(U.map(ConfigureRecursiveConstructors)({Leaf, Branch}))
-let pickRecursiveGetters = U.pick(['BoundingRect', 'Get', 'Living'])
-let recursiveGetters = U.zip(U.map(pickRecursiveGetters)({Leaf, Branch}))
-let toFixByNode = {...recursiveGetters, ...U.pick(['Copy', 'Next', 'Set'])(recursiveConstructors)}
-let toFixBySize = U.pick(['FromLiving'])(recursiveConstructors)
-let fixed = {
-      ...U.map(FixByNode(LEAF_SIZE))(toFixByNode),
-      ...U.map(FixBySize(LEAF_SIZE))(toFixBySize)
-    }
-let fixedCopy = fixed.Copy
-let memoTable = new Map()
-let memoTableAccessors = {
-      GetMemo: key => memoTable.get(key),
-      SetMemo: (key, value) => memoTable.set(key, value)
-    }
-let withCopyUsingMemoTable = {
-      ...fixed,
-      Copy: (...args) => {
-        memoTable.clear()
-        return CopyMemoTableCtx.let(memoTableAccessors, () => fixedCopy(...args))
-      },
-    }
-let withGetters = {
-      ...withCopyUsingMemoTable,
-      GetHash: node => {
-        let GetHash = node.size === LEAF_SIZE ? Leaf.GetHash : Branch.GetHash
-        return GetHash(node)
-      },
-      GetPopulation: node => {
-        let GetPopulation = node.size === LEAF_SIZE ? Leaf.GetPopulation : Branch.GetPopulation
-        return GetPopulation(node)
-      }
-    }
-let withNewBranch = {
-      ...withGetters,
-      NewBranch: Branch.New
-    }
-let named = U.map(U.setName)(withNewBranch)
+let recursiveFnNames = {
+  constructors: ['Copy', 'FromLiving', 'Next', 'Set'],
+  byArg0: {
+    node: ['BoundingRect', 'Copy', 'Get', 'Living', 'Next', 'Set'],
+    size: ['FromLiving'],
+  }
+}
 
-export default {
-  ...named,
-  Render,
-  LEAF_SIZE
+// Allocation
+for (let f of recursiveFnNames.constructors) {
+  Leaf  [f] =              (Leaf  [f])({Allocate: Allocate.Leaf  })
+  Branch[f] = U.partialOpts(Branch[f])({Allocate: Allocate.Branch})
+}
+
+// Canonicalization
+for (let f of recursiveFnNames.constructors) {
+  Leaf  [f] =          (Leaf  .CanonicalizeConstructor)(Leaf  [f])
+  Branch[f] = U.compose(Branch.CanonicalizeConstructor)(Branch[f])
+}
+
+// Memoization
+let MN = MemoizeNext({Allocate: Allocate.Neighborhood, Branch, Leaf, Edge})
+Leaf  .Next =          (MN)(Leaf  .Next)
+Branch.Next = U.compose(MN)(Branch.Next)
+
+let copyMemoTable = new Map()
+let UMT = MemoizeWithTable(copyMemoTable)
+Leaf  .Copy =          (UMT)(Leaf  .Copy)
+Branch.Copy = U.compose(UMT)(Branch.Copy)
+
+// Fix
+let Tree = {}
+for (let f of recursiveFnNames.byArg0.node) {
+  Tree[f] = FixByArg0Size(LEAF_SIZE)({Branch: Branch[f], Leaf: Leaf[f]})
+}
+for (let f of recursiveFnNames.byArg0.size) {
+  Tree[f] = FixByArg0(LEAF_SIZE)({Branch: Branch[f], Leaf: Leaf[f]})
+}
+
+// Entry point config
+Tree.Copy = WithClearedMemoTable(copyMemoTable)(Tree.Copy)
+
+// Non-recursive config
+Tree.GetHash = SwitchByNode('GetHash')
+Tree.GetPopulation = SwitchByNode('GetPopulation')
+
+// Misc
+Tree.NewBranch = Branch.New
+Tree.Render = Render
+Tree = U.map(U.setName)(Tree)
+Tree.LEAF_SIZE = LEAF_SIZE
+
+export default Tree
+
+function SwitchByNode(name) {
+  let LeafCase   = Leaf[name]
+  let BranchCase = Branch[name]
+  return node => node.size === LEAF_SIZE
+    ? LeafCase(node)
+    : BranchCase(node)
 }

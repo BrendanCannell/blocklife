@@ -2,7 +2,7 @@ import {SIZE} from "./constants"
 import Mutate from "./mutate"
 
 export default ({Allocate}) =>
-  function LeafFromLiving(_, locations) {
+  function LeafFromLiving(locations) {
     let raw = Allocate()
     for (let i = 0; i < SIZE; i++)
       raw[i] = 0
