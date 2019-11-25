@@ -1,3 +1,5 @@
 export default function EdgeAllocate() {
-  return [null, null, NaN]
+  let edge = [null, null]
+  edge.hash = NaN
+  return edge
 }

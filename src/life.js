@@ -1,4 +1,4 @@
-import * as G from "./infinite-grid"
+import * as G from "./infinite-grid32"
 import Store from "./canonical-store32"
 import LetStore from "./let-store"
 
@@ -51,7 +51,7 @@ export function Set(life, location, state, opts) {
 
 export function SetMany(life, pairs, opts) {
   let store = life.newStore()
-    , grid = LetStore(store, () => G.Set(life.grid(), pairs))
+    , grid = LetStore(store, () => G.SetMany(life.grid(), pairs))
     , recycledStore = Go(opts, 'canFree') && life.takeStore()
   return Make(grid, store, recycledStore)
 }

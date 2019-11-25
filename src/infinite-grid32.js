@@ -56,37 +56,31 @@ export function FromLiving(locations) {
   }
 }
 
-export function* Living(infiniteGrid) {
-  let offset = infiniteGrid.size / 2
-  for (let [x, y] of T.Living(infiniteGrid.root))
+function FromRoot(root) {
+  let size = T.GetSize(root)
+  let empty = T.FromLiving(size, [])
+  return {size, root, empty}
+}
+
+export function* Living(grid) {
+  let offset = grid.size / 2
+  for (let [x, y] of T.Living(grid.root))
     yield [x - offset, y - offset]
 }
 
-export function Next(infiniteGrid) {
-  let {size, root: r, empty: e} = infiniteGrid
-    // Get the next generation of the root
-    , C = T.Next(r, e, e, e, e, e, e, e, e)
-    // Also get the next generation of empty regions to N/S/W/E
-    , N = T.Next(e, e, r, e, e, e, e, e, e)
-    , S = T.Next(e, r, e, e, e, e, e, e, e)
-    , W = T.Next(e, e, e, e, r, e, e, e, e)
-    , E = T.Next(e, e, e, r, e, e, e, e, e)
-    // These will usually be empty
-    // If they aren't, expand the grid
-    , mustGrow = (
-           N.population !== 0
-        || S.population !== 0
-        || W.population !== 0
-        || E.population !== 0
-      )
-    , newRoot = mustGrow
-      ? Grow(C, N, S, W, E)
-      : {
-        size,
-        root: C,
-        empty: T.Copy(e),
-      }
-  return newRoot
+export function Next(grid) {
+  let {size, root, empty: e} = grid
+  // A cell could be born outside the root if at least one edge has a population >= 3
+  // So in that case we expand the grid and iterate the expanded version.
+  for (let side of D.SIDES) {
+    let edgePopulation = T.GetEdgePopulation(root, side)
+    if (edgePopulation >= 3) return Next(Grow(grid))
+  }
+  return {
+    size,
+    root: T.Next(root, e, e, e, e, e, e, e, e),
+    empty: T.Copy(e),
+  }
 }
 
 export function Get(grid, location) {
@@ -107,62 +101,28 @@ export function Render(grid, renderCfg) {
   T.Render(grid.root, -grid.size/2, -grid.size/2, renderCfg)
 }
 
-export function Set(grid, pairs) {
+function SetOrMutateMany(grid, pairs, inPlace) {
   let {size, empty, root} = grid
     , withGridLocs = pairs.map(([loc, state]) => [GridLoc(size, loc), state])
     , mustGrow = withGridLocs.some(([loc]) => !loc)
   if (mustGrow) {
-    let grown = Grow(root, empty, empty, empty, empty)
-    return Set(grown, pairs)
+    return SetOrMutateMany(Grow(grid), pairs, inPlace)
   }
-  else return {
-    size,
-    empty: T.Copy(empty),
-    root: T.Set(root, withGridLocs)
+  else {
+    let method = inPlace ? 'MutateMany' : 'SetMany'
+    return {
+      size,
+      empty: inPlace ? empty : T.Copy(empty),
+      root: T[method](root, withGridLocs)
+    }
   }
 }
 
-function Grow(center, north, south, west, east) {
-  let oldSize = T.GetSize(center)
-    , emptyGrandchild = T.FromLiving(oldSize / 2, [])
-    , e = emptyGrandchild
-    , size = oldSize * 2
-    , root = T.NewBranch(
-        size,
-        T.NewBranch(
-          oldSize,
-          e,
-          north[D.SW],
-          west[D.NE],
-          center[D.NW]
-        ),
-        T.NewBranch(
-          oldSize,
-          north[D.SE],
-          e,
-          center[D.NE],
-          east[D.NW]
-        ),
-        T.NewBranch(
-          oldSize,
-          west[D.SE],
-          center[D.SW],
-          e,
-          south[D.NW]
-        ),
-        T.NewBranch(
-          oldSize,
-          center[D.SE],
-          east[D.SW],
-          south[D.NE],
-          e
-        )
-      )
-  return {
-    size,
-    root,
-    empty: T.FromLiving(size, [])
-  }
+export let SetMany    = (grid, pairs) => SetOrMutateMany(grid, pairs, false)
+export let MutateMany = (grid, pairs) => SetOrMutateMany(grid, pairs, true)
+
+function Grow(grid) {
+  return FromRoot(T.Grow(grid.root))
 }
 
 // [-size/2, size/2) -> [0, size)

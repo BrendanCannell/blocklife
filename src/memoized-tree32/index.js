@@ -1,14 +1,13 @@
 import * as U from "../util"
-import FixByArg0 from "../fix-by-arg0"
-import FixByArg0Size from "../fix-by-arg0-size"
-import {SIZE as LEAF_SIZE} from "../leaf32/constants"
+import * as D from "../direction"
 
 import {
   Allocate as AllocateCtx
 } from "../context"
 let Allocate = U.map(AC => (...args) => AC()(...args))(AllocateCtx)
 
-import MemoizeNext from "../memoize-next"
+import ToMemoizeNext from "../memoize-next"
+import ToMemoizeSetMany from "../memoize-set-many"
 import MemoizeWithTable from "../memoize-with-table"
 import WithClearedMemoTable from "../with-cleared-memo-table"
 import Leaf from "./leaf"
@@ -16,13 +15,20 @@ import Edge from "./edge"
 import Branch from "./branch"
 import Render from "./render"
 
+import ToFixByArg0 from "../fix-by-arg0"
+import ToFixByArg0Size from "../fix-by-arg0-size"
+import ToDispatchByArg0Size from "../dispatch-by-arg0-size"
+let FixByArg0 = ToFixByArg0(Leaf.SIZE)
+let FixByArg0Size = ToFixByArg0Size(Leaf.SIZE)
+let DispatchByArg0Size = ToDispatchByArg0Size(Leaf.SIZE)
+
 // Configure each case of each recursive functions, where needed
-// Because the branch cases can't be provided with their recursive callbacks until the end, their configuration involves some extra function composition and partial application.
+// Because the branch cases can't be provided with their recursive callbacks until the end, the branch case configuration involves some extra function composition and partial application.
 
 let recursiveFnNames = {
-  constructors: ['Copy', 'FromLiving', 'Next', 'Set'],
+  constructors: ['Copy', 'FromLiving', 'Next', 'SetMany'],
   byArg0: {
-    node: ['BoundingRect', 'Copy', 'Get', 'Living', 'Next', 'Set'],
+    node: ['BoundingRect', 'Copy', 'Get', 'Living', 'Next', 'SetMany'],
     size: ['FromLiving'],
   }
 }
@@ -40,44 +46,61 @@ for (let f of recursiveFnNames.constructors) {
 }
 
 // Memoization
-let MN = MemoizeNext({Allocate: Allocate.Neighborhood, Branch, Leaf, Edge})
-Leaf  .Next =          (MN)(Leaf  .Next)
-Branch.Next = U.compose(MN)(Branch.Next)
+let MemoizeNext = ToMemoizeNext({Allocate: Allocate.Neighborhood, Branch, Leaf, Edge})
+Leaf  .Next =          (MemoizeNext)(Leaf  .Next)
+Branch.Next = U.compose(MemoizeNext)(Branch.Next)
+
+let setMemoTable = new Map()
+let MemoizeSetMany = ToMemoizeSetMany(setMemoTable)
+Leaf  .SetMany =          (MemoizeSetMany)(Leaf  .SetMany)
+Branch.SetMany = U.compose(MemoizeSetMany)(Branch.SetMany)
 
 let copyMemoTable = new Map()
-let UMT = MemoizeWithTable(copyMemoTable)
-Leaf  .Copy =          (UMT)(Leaf  .Copy)
-Branch.Copy = U.compose(UMT)(Branch.Copy)
+let MemoizeCopy = MemoizeWithTable(copyMemoTable)
+Leaf  .Copy =          (MemoizeCopy)(Leaf  .Copy)
+Branch.Copy = U.compose(MemoizeCopy)(Branch.Copy)
 
 // Fix
 let Tree = {}
+let T = Tree
 for (let f of recursiveFnNames.byArg0.node) {
-  Tree[f] = FixByArg0Size(LEAF_SIZE)({Branch: Branch[f], Leaf: Leaf[f]})
+  T[f] = FixByArg0Size({Branch: Branch[f], Leaf: Leaf[f]})
 }
 for (let f of recursiveFnNames.byArg0.size) {
-  Tree[f] = FixByArg0(LEAF_SIZE)({Branch: Branch[f], Leaf: Leaf[f]})
+  T[f] = FixByArg0({Branch: Branch[f], Leaf: Leaf[f]})
 }
 
 // Entry point config
-Tree.Copy = WithClearedMemoTable(copyMemoTable)(Tree.Copy)
+T.SetMany  = WithClearedMemoTable(setMemoTable) (T.SetMany)
+T.Copy = WithClearedMemoTable(copyMemoTable)(T.Copy)
 
 // Non-recursive config
-Tree.GetHash = SwitchByNode('GetHash')
-Tree.GetPopulation = SwitchByNode('GetPopulation')
-Tree.GetSize = SwitchByNode('GetSize')
+let nonrecursiveFnNames = ['GetEdge', 'GetHash', 'GetPopulation', 'GetSize']
+for (let f of nonrecursiveFnNames) {
+  T[f] = DispatchByArg0Size({Branch: Branch[f], Leaf: Leaf[f]})
+}
 
 // Misc
-Tree.NewBranch = Branch.New
-Tree.Render = Render
-Tree = U.map(U.setName)(Tree)
-Tree.LEAF_SIZE = LEAF_SIZE
-
-export default Tree
-
-function SwitchByNode(name) {
-  let LeafCase   = Leaf[name]
-  let BranchCase = Branch[name]
-  return node => node.size === LEAF_SIZE
-    ? LeafCase(node)
-    : BranchCase(node)
+T.GetEdgePopulation = function GetEdgePopulation(tree, direction) {
+  let edge = T.GetEdge(tree, direction)
+  return Edge.GetPopulation(edge)
 }
+T.Grow = function Grow(oldTree) {
+  let oldSize = T.GetSize(oldTree)
+  let emptyGrandchild = T.FromLiving(oldSize / 2, [])
+  let size = oldSize * 2
+  let e = emptyGrandchild, t = T.Copy(oldTree)
+  let grownTree = Branch.New(
+    size,
+    Branch.New(oldSize, e, e, e, t[D.NW]),
+    Branch.New(oldSize, e, e, t[D.NE], e),
+    Branch.New(oldSize, e, t[D.SW], e, e),
+    Branch.New(oldSize, t[D.SE], e, e, e)
+  )
+  return grownTree
+}
+T.Render = Render
+T.LEAF_SIZE = Leaf.SIZE
+T = U.map((val, key) => typeof val === 'function' ? U.setName(val, key) : val)(T)
+
+export default T

@@ -1,10 +1,10 @@
-import CanonicalNeighborhoodConstructor from "./neighborhood/canonical-constructor"
-import NN from "./neighborhood/new"
+import ToCanonicalizeNeighborhoodConstructor from "./neighborhood/canonical-constructor"
+import ToNewNeighborhood from "./neighborhood/new"
 
 let MemoizeNext = ({Allocate, Branch, Edge, Leaf}) => function MemoizeNext(Next) {
-  let CNC = CanonicalNeighborhoodConstructor({Branch, Edge, Leaf, Next})
-    , NewNeighborhood = CNC(NN({Allocate, Branch, Edge, Leaf}))
-  
+  let NewNeighborhood = ToNewNeighborhood({Allocate, Branch, Edge, Leaf})
+  let CanonicalizeNeighborhoodConstructor = ToCanonicalizeNeighborhoodConstructor({Branch, Edge, Leaf, Next})
+  NewNeighborhood = CanonicalizeNeighborhoodConstructor(NewNeighborhood)
   return function MemoizedNext(...args) {
     return NewNeighborhood(...args).next
   }

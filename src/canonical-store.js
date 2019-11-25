@@ -1,8 +1,8 @@
 import * as U from "./util"
 
-export default Storables => {
+export function ToMakeCanonicalStore(storables) {
   let storeGeneration = 0
-  let MakeCanonicalSubstores = U.map(ToMakeCanonicalSubstore)(Storables)
+  let MakeCanonicalSubstores = U.map(ToMakeCanonicalSubstore)(storables)
   return function Store() {
     let sg = storeGeneration++
       , substores = U.map(MCS => MCS(sg))(MakeCanonicalSubstores)
@@ -17,8 +17,8 @@ export default Storables => {
 }
 
 import S from "./substore"
-function ToMakeCanonicalSubstore(Storable) {
-  let MakeSubstore = S(Storable)
+function ToMakeCanonicalSubstore(storable) {
+  let MakeSubstore = S(storable)
   return function MakeCanonicalSubstore(storeGeneration, substore = MakeSubstore(), hashTable = new Map()) {
     return {
       Allocate: (...args) => {
@@ -27,7 +27,10 @@ function ToMakeCanonicalSubstore(Storable) {
         return obj
       },
       Free: substore.Free,
-      GetCanon: hash => hashTable.get(hash),
+      GetCanon: hash => {
+        let canon = hashTable.get(hash)
+        return canon
+      },
       SetCanon: (hash, node) => hashTable.set(hash, node),
       Clear: () => substore.Clear() && hashTable.clear(),
       Show: () => ({

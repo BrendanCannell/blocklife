@@ -1,36 +1,40 @@
 import * as U from "./util"
 
-export default function MakeMakeCanonicalConstructor(c8izable, Canon) {
-  let Canonicalize = MakeCanonicalize(c8izable, Canon)
-  return function MakeCanonicalConstructor(Constructor) {
-    let CanonicalConstructor = (...args) =>
-      Canonicalize(Constructor(...args))
+export default function MakeMakeCanonicalizingConstructor(canonicalizable, Canon) {
+  let Canonicalize = MakeCanonicalizer(canonicalizable, Canon)
+  return function MakeCanonicalizingConstructor(Constructor) {
+    let CanonicalizingConstructor = (...args) => Canonicalize(Constructor(...args))
     if (Constructor.name)
-      U.setName(CanonicalConstructor, 'Canonical' + Constructor.name)
-    return CanonicalConstructor
+      U.setName(CanonicalizingConstructor, 'Canonicalized' + Constructor.name)
+    return CanonicalizingConstructor
   }
 }
 
-function MakeCanonicalize({Hash, Equal, SetDerived}, Canon) {
+// Canonicalization:
+// * Hash the value and check if a value with that hash exists in the canonical store (checking for collisions)
+// * If a canonical copy exists:
+// *   Free the new, non-canonical copy
+// *   Return the canonical copy
+// * Else:
+// *   Generate any derived data for the result
+// *   Set the canonical store to map the hash to the result
+// *   Return the result
+
+function MakeCanonicalizer({Hash, Equal, SetDerived}, Canon) {
   return function Canonicalize(newObj) {
     let {GetCanon, SetCanon, Free} = Canon()
-      , hash = Hash(newObj)
-      , bin = hash
-    do {
-      var canonical = GetCanon(bin)
-      var collision = canonical && !Equal(newObj, canonical)
-      if (collision) {
-        console.log(`COLLISION: ${bin}\n`, {newObj, canonical})
-        bin++
-      }
-    } while (collision)
-    if (!canonical) {
-      SetDerived(newObj, hash)
-      SetCanon(bin, newObj)
-      return newObj
-    } else {
-      Free(newObj)
-      return canonical
+    var bin = Hash(newObj)
+    var canonical = GetCanon(bin)
+    while (canonical && !Equal(newObj, canonical)) {
+      console.error(`COLLISION: ${bin}\n`, {newObj, canonical})
+      canonical = GetCanon(++bin)
     }
+    if (canonical) Free(newObj)
+    else {
+      SetDerived(newObj, bin)
+      SetCanon(bin, newObj)
+      canonical = newObj
+    }
+    return canonical
   }
 }

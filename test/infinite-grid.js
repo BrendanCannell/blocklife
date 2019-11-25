@@ -2,7 +2,7 @@ import {AscXGroupedByDescY as order} from "./util/location"
 import Glider from "./util/glider"
 import Store from "../src/canonical-store32"
 import LetStore from "../src/let-store"
-import * as G from "../src/infinite-grid"
+import * as G from "../src/infinite-grid32"
 
 export function testInfiniteGridNext(t) {
   for (let direction in Glider) {
@@ -13,7 +13,7 @@ export function testInfiniteGridNext(t) {
       , glider = Glider[direction](-stepCount/2, offset)
       , grid = LetStore(store2, () => {
           let empty = G.FromLiving([])
-          return G.Set(empty, glider.map(loc => [loc, true]))
+          return G.SetMany(empty, glider.map(loc => [loc, true]))
         })
     for (let i = 0; i < stepCount; i++) {
       let store = i % 2 === 0 ? store1 : store2

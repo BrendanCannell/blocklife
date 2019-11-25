@@ -19,7 +19,7 @@ import Living from "./living"
 import Next from "./next"
 import PrimitiveGet from "./primitive-get"
 import Render from "./render"
-import Set from "./set"
+import SetMany from "./set-many"
 import SetDerived from "./set-derived"
 let raw = {
   SIZE, WEST_EDGE, EAST_EDGE,
@@ -41,10 +41,10 @@ let raw = {
   Next,
   PrimitiveGet,
   Render,
-  Set,
+  SetMany,
   SetDerived
 }
-let constructors = U.pick(['Copy', 'FromLiving', 'Next', 'Set'])(raw)
+let constructors = U.pick(['Copy', 'FromLiving', 'Next', 'SetMany'])(raw)
 let withSetDerived = {
   ...raw,
   ...U.map(ConfigureConstructor)(constructors)

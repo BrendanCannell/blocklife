@@ -19,6 +19,7 @@ function Canonicalizable() {
   }
 
   function EdgeSetDerived(edge, hash) {
+    let hasLeafChildren = typeof edge[0] === 'number'
     edge[HASH] = hash
     return edge
   }

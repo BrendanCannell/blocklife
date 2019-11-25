@@ -1,1 +1,1 @@
-export const HASH = 2
+export const HASH = 'hash'

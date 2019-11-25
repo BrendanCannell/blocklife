@@ -11,7 +11,7 @@ import Living from "./living"
 import New from "./new"
 import Next from "./next"
 import Render from "./render"
-import Set from "./set"
+import SetMany from "./set-many"
 
 export default {
   BoundingRect,
@@ -27,5 +27,5 @@ export default {
   New,
   Next,
   Render,
-  Set,
+  SetMany,
 }

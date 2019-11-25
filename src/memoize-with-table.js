@@ -1,4 +1,9 @@
-let MemoizeWithTable = memoTable => Fn =>
+import * as U from "./util"
+
+let MemoizeWithTable = memoTable => Fn => {
+  if (Fn.name) U.setName(Memoized, 'Memoized' + Fn.name)
+  return Memoized
+
   function Memoized(arg) {
     let memo = memoTable.get(arg)
     if (memo) return memo
@@ -8,5 +13,5 @@ let MemoizeWithTable = memoTable => Fn =>
       return result
     }
   }
-  
+}
 export default MemoizeWithTable
